@@ -1,11 +1,15 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.IO;  // for File I/O
+using System.Globalization;  // for converting strings to floats
 
 
 class Job
 {
-    public Job(int _blockindex, GameObject prefab, Vector3[] _positions, Vector3 _currpos, float[] _movetime, float[] _finishtime, float[] _starttime)
+    public Job(Color _color, int _blockindex, GameObject prefab, 
+        List<Vector3> _positions, Vector3 _source, Vector3 _sink, 
+        float[] _movetime, float[] _finishtime, float[] _starttime)
     {
         
         // Instantiate는 static 메서드이므로 Object.Instantiate로 호출해야 합니다.
@@ -13,7 +17,9 @@ class Job
         // 생성한 인스턴스에서 Block 컴포넌트 가져오기
         Block blockComp = block.GetComponent<Block>();
         // 초기화 메서드 호출
-        blockComp.Initialize(_blockindex, _positions, _movetime, _finishtime, _starttime, _currpos);
+        blockComp.Initialize(_color, _blockindex, 
+            _positions, _source, _sink,
+            _movetime, _finishtime, _starttime);
 
         // 활성화
         block.SetActive(true);
@@ -49,7 +55,13 @@ public class GameManager : MonoBehaviour
     public GameObject ProcessPrefab;
 
 
+    public string colorPath = "color.csv"; // CSV 파일 경로 (프로젝트 폴더 내)
+    public string positionPath = "position.csv";
+    private List<Color> colorData; // CSV 파일로부터 읽은 RGB 값들 저장
+    private List<Vector3> positionData;
     public Transform parent;
+    static int numBlocks = 15;
+    static int numProcesses = 10;
 
     public bool isFinished;
 
@@ -58,59 +70,113 @@ public class GameManager : MonoBehaviour
     private Machine[] machines;
     private Vector3 pos;
     private Vector3 processposition;
-    private int num_machine = 3;
+    private Vector3 machineposition;
     int count;
+    List<Vector3> source;
+    List<Vector3> sink;
+
 
     // Start is called before the first frame update
     void Start()
     {
+        Time.timeScale = 2f;
+        // 1. CSV 파일 읽기
+        colorData = ReadColorsFromCSV(colorPath);
+        positionData = ReadPositionFromCSV(positionPath);
+
+
         // Job 배열 크기 지정
-        jobs = new Job[3];  // 3개의 Job을 담을 수 있는 배열 생성
-        machines = new Machine[num_machine];
+        jobs = new Job[numBlocks];  // 3개의 Job을 담을 수 있는 배열 생성
+        machines = new Machine[numProcesses];
 
-        //------------------------------------------------
-        Vector3[] pos = new Vector3[]
+        source = stackPositions(5, 0.0f, 0.0f, 1.5f, 0.6f, -0.6f);
+        sink = stackPositions(5, -2.0f, 0.0f, -2.0f, -0.6f, 0.6f);
+
+        List<float[]> move = new List<float[]>();
+        List<float[]> start = new List<float[]>();
+        List<float[]> finish = new List<float[]>();
+        float interval = 2.0f;
+        List<float> t = new List<float>();
+        for (int u = 0; u < numProcesses; u++)
         {
-            new Vector3(-2.0f, 0.0f, 0.0f),
-            new Vector3(0.0f, 0.0f, 0.0f),
-            new Vector3(1.5f, 0.0f, 0.0f),
-            new Vector3(3.0f, 0.0f, 0.0f),
-            new Vector3(4.5f, 0.0f, 0.0f)
-        };
-        Vector3 source = new Vector3(-2.0f, 0.0f, 0.0f);
+            t.Add(interval * u);
+        }
 
-        float[] move1 = new float[] { 0.0f, 0.0f, 4.0f, 6.0f ,9.0f};
-        float[] start1 = new float[] { 0.0f, 0.5f, 4.5f, 6.5f ,9.5f};
-        float[] finish1 = new float[] { 0.0f, 4.0f, 6.0f, 9.0f ,9.5f};
-        // 각각의 Job 객체 생성
-        jobs[0] = new Job(0, BlockPrefab, pos, source, move1, finish1, start1);
-
-        //------------------------------------------------
-        float[] move2 = new float[] { 0.0f, 4.0f, 7.0f, 9.0f, 11.0f };
-        float[] start2 = new float[] { 0.0f, 4.5f, 7.5f, 9.5f, 11.5f};
-        float[] finish2 = new float[] { 0.0f, 7.0f, 9.0f, 11.0f ,11.5f};
-        jobs[1] = new Job(1, BlockPrefab, pos, source, move2, finish2, start2);
-        //------------------------------------------------
+        for (int v = 0; v< numBlocks; v++)
+        {
+            // 새로운 배열을 생성 (첫 번째 요소는 0.0f, 나머지는 t[i] + 0.5f)
+            float[] _move = new float[1+numProcesses];
+            float[] _start = new float[1+numProcesses];
+            float[] _finish = new float[1+numProcesses];
+            _move[0] = 0.0f;  // 첫 번째 값은 0.0f
+            _start[0] = 0.0f;  // 첫 번째 값은 0.0f
+            _finish[0] = 0.0f;  // 첫 번째 값은 0.0f
         
-        float[] move3 = new float[] { 0.0f, 7.0f, 9.0f, 11.0f, 13.0f};
-        float[] start3 = new float[] { 0.0f, 7.5f, 9.5f, 11.5f, 13.5f};
-        float[] finish3 = new float[] { 0.0f, 8.0f, 10.0f, 13.0f, 13.5f};
+            for (int i = 0; i < numProcesses; i++)
+            {
+                _move[i + 1] = t[i];
+                _start[i + 1] = t[i] + 0.5f;  // t[i] + 0.5f를 result의 두 번째부터 채움
+            }
 
-        jobs[2] = new Job(2, BlockPrefab, pos, source, move3, finish3, start3);
+            move.Add(_move);
+            start.Add(_start);
+            List<float> rnd = new List<float>();
+            for (int u = 0; u < numProcesses; u++)
+            {
+                rnd.Add(Random.Range(1.0f, 1.5f));
+            }
+            for (int i = 0; i < numProcesses; i++)
+            {
+                _finish[i + 1] = t[i] + rnd[i];
+            }
+            finish.Add(_finish);
+            for (int u = 0; u < numProcesses; u++)
+            {
+                t[u] += interval;
+            }
+            
+        }
+            
+        // 각각의 Job 객체 생성
+        for (int d = 0; d < numBlocks; d++)
+        {
+            int coloridx = d % colorData.Count;
+            jobs[d] = new Job(colorData[coloridx], d, BlockPrefab,
+            positionData, source[d], sink[d],
+            move[d], finish[d], start[d]);
+        }
+
+            
+
+        ////------------------------------------------------
+        //float[] move2 = new float[] { 0.0f, 4.0f, 7.0f, 9.0f,};
+        //float[] start2 = new float[] { 0.0f, 4.5f, 7.5f, 9.5f};
+        //float[] finish2 = new float[] { 0.0f, 7.0f, 9.0f, 11.0f};
+        //jobs[1] = new Job(colorData[1], 1, BlockPrefab,
+        //    positionData, source[1], sink[1],
+        //    move2, finish2, start2);
+        ////------------------------------------------------
+        
+        //float[] move3 = new float[] { 0.0f, 7.0f, 9.0f, 11.0f};
+        //float[] start3 = new float[] { 0.0f, 7.5f, 9.5f, 11.5f};
+        //float[] finish3 = new float[] { 0.0f, 8.0f, 10.0f, 13.0f};
+
+        //jobs[2] = new Job(colorData[2], 2, BlockPrefab, 
+        //    positionData, source[2], sink[2],
+        //    move3, finish3, start3);
 
         //------------------------------------------------
-        int n = 0;
-        for (int j = 0; j < 3; j++)
+        for (int j = 0; j < numProcesses; j++)
         {
-            processposition = new Vector3(j * 1.5f, -0.31f, 0.0f);
-            machines[n] = new Machine(ProcessPrefab, processposition);
-            Debug.Log("New machine " + n + " generated on " + processposition);
-            n++;
+            Debug.Log(j);
+            machineposition = new Vector3(positionData[j+1].x, -0.31f, positionData[j+1].z);
+            machines[j] = new Machine(ProcessPrefab, machineposition);
+            Debug.Log("New machine " + j + " generated on " + machineposition);
         }
 
 
-        
-        
+
+
     }
 
     // Update is called once per frame
@@ -120,6 +186,7 @@ public class GameManager : MonoBehaviour
         check_termination();
 
     }
+
     void check_termination()
     {
 
@@ -136,5 +203,77 @@ public class GameManager : MonoBehaviour
         {
             Debug.Log("All Jobs Finished!");
         }
+    }
+    // CSV 파일에서 RGB 값을 읽어와서 List<float[3]> 형태로 저장
+    List<Vector3> ReadPositionFromCSV(string file)
+    {
+        List<Vector3> positions = new List<Vector3>();  // 색상 리스트
+        string path = Path.Combine(Application.dataPath, file);  // 파일 경로
+        positions.Add(new Vector3(0.0f, 0.0f, 0.0f));  // float[3]로 저장
+        if (File.Exists(path))
+        {
+            string[] lines = File.ReadAllLines(path);  // 모든 라인을 읽음
+
+            foreach (string line in lines)
+            {
+                string[] values = line.Split(',');  // 쉼표로 값들을 분리
+                float x = float.Parse(values[0], CultureInfo.InvariantCulture);  // Red
+                float y = float.Parse(values[1], CultureInfo.InvariantCulture);  // Green
+                float z = float.Parse(values[2], CultureInfo.InvariantCulture);  // Blue
+
+                positions.Add(new Vector3(x, y, z));  // float[3]로 저장
+            }
+        }
+        else
+        {
+            Debug.LogError("CSV file not found at: " + path);
+        }
+
+        return positions;
+    }
+
+    // CSV 파일에서 RGB 값을 읽어와서 List<float[3]> 형태로 저장
+    List<Color> ReadColorsFromCSV(string file)
+    {
+        List<Color> colors = new List<Color>();  // 색상 리스트
+        string path = Path.Combine(Application.dataPath, file);  // 파일 경로
+
+        if (File.Exists(path))
+        {
+            string[] lines = File.ReadAllLines(path);  // 모든 라인을 읽음
+
+            foreach (string line in lines)
+            {
+                string[] values = line.Split(',');  // 쉼표로 값들을 분리
+                float r = float.Parse(values[1], CultureInfo.InvariantCulture);  // Red
+                float g = float.Parse(values[2], CultureInfo.InvariantCulture);  // Green
+                float b = float.Parse(values[3], CultureInfo.InvariantCulture);  // Blue
+
+                colors.Add(new Color(r / 255f, g / 255f, b / 255f));  // float[3]로 저장
+            }
+        }
+        else
+        {
+            Debug.LogError("CSV file not found at: " + path);
+        }
+
+        return colors;
+    }
+
+    List<Vector3> stackPositions(int n_row, float startX, float startY, float startZ, float zOffset, float xOffset)
+    {
+        
+        List<Vector3> sources = new List<Vector3>();
+        // 처음 3개의 블록은 z 방향으로 쌓고, 그 이후로는 x 방향으로 나가면서 z 방향으로 쌓음
+        int a;
+        int b;
+        for (int i = 0; i < numBlocks; i++)
+        {
+            a = i / n_row;
+            b = i % n_row;
+            sources.Add(new Vector3(startX + xOffset * a, startY, startZ + zOffset * b));
+            
+        }
+        return sources;
     }
 }

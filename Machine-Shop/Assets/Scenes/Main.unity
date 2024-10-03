@@ -155,6 +155,8 @@ MonoBehaviour:
     type: 3}
   ProcessPrefab: {fileID: 6157636203399221521, guid: 1935f0ce65c806c4e8d8fe17950924bf,
     type: 3}
+  colorPath: color.csv
+  positionPath: position.csv
   parent: {fileID: 0}
   isFinished: 0
 --- !u!4 &530471197
@@ -217,7 +219,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 699242870}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 76c392e42b5098c458856cdf6ecaaaa1, type: 3}
   m_Name: 
