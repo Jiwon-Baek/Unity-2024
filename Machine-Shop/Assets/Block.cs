@@ -87,7 +87,8 @@ public class Block : MonoBehaviour
     {
         isFinished = false;
         transform.position = currentPosition;
-        targetPosition = positions[currentindex];
+        positions[0] = transform.position;
+        targetPosition = positions[0];
         blockrenderer = GetComponent<Renderer>();
         blockrenderer.material.color = originalColor;
 
@@ -130,7 +131,6 @@ public class Block : MonoBehaviour
         // Part 2
         if (delta > target_delta) // 단 한 번 호출되는 함수. movetime 도달을 제어
         {
-            Debug.Log("Part 2 Called at" + timer);
             delta = 0.0f;
             // 0.5에 timer로 0.5를 감지해서 update
             currentindex += 1; // 0에서 1로 변경
@@ -153,19 +153,23 @@ public class Block : MonoBehaviour
 
         if (timer >= movetime[currentindex] && timer <= starttime[currentindex])
         {
-            
+            blockrenderer.material.color = darkColor;
             Move();
         }
         else
         {
+            if (transform.position != targetPosition)
+            {
+                Move();
+            }
             if(timer > starttime[currentindex] && timer < finishtime[currentindex])
             {
                 check_arrival();
+                blockrenderer.material.color = originalColor;
                 //UpdateColorOverTime();
             }
             else
             {
-                
                 blockrenderer.material.color = darkColor;
             }
         }
