@@ -61,7 +61,7 @@ public class GameManager : MonoBehaviour
     private List<Vector3> positionData;
     public Transform parent;
     static int numBlocks = 15;
-    static int numProcesses = 10;
+    static int numProcesses = 5;
 
     public bool isFinished;
 
@@ -145,27 +145,6 @@ public class GameManager : MonoBehaviour
             positionData, source[d], sink[d],
             move[d], finish[d], start[d]);
         }
-
-            
-
-        ////------------------------------------------------
-        //float[] move2 = new float[] { 0.0f, 4.0f, 7.0f, 9.0f,};
-        //float[] start2 = new float[] { 0.0f, 4.5f, 7.5f, 9.5f};
-        //float[] finish2 = new float[] { 0.0f, 7.0f, 9.0f, 11.0f};
-        //jobs[1] = new Job(colorData[1], 1, BlockPrefab,
-        //    positionData, source[1], sink[1],
-        //    move2, finish2, start2);
-        ////------------------------------------------------
-        
-        //float[] move3 = new float[] { 0.0f, 7.0f, 9.0f, 11.0f};
-        //float[] start3 = new float[] { 0.0f, 7.5f, 9.5f, 11.5f};
-        //float[] finish3 = new float[] { 0.0f, 8.0f, 10.0f, 13.0f};
-
-        //jobs[2] = new Job(colorData[2], 2, BlockPrefab, 
-        //    positionData, source[2], sink[2],
-        //    move3, finish3, start3);
-
-        //------------------------------------------------
         for (int j = 0; j < numProcesses; j++)
         {
             Debug.Log(j);
@@ -173,23 +152,16 @@ public class GameManager : MonoBehaviour
             machines[j] = new Machine(ProcessPrefab, machineposition);
             Debug.Log("New machine " + j + " generated on " + machineposition);
         }
-
-
-
-
     }
 
     // Update is called once per frame
     void Update()
     {
-        
         check_termination();
-
     }
 
     void check_termination()
     {
-
         int count = 0;
         for (int i = 0; i < jobs.Length; i++)
         {

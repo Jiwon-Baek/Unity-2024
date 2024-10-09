@@ -6,6 +6,7 @@ TagManager:
   tags:
   - Block
   - Process
+  - Steel
   layers:
   - Default
   - TransparentFX

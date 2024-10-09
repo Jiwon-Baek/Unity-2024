@@ -4,20 +4,20 @@ using UnityEngine;
 
 
 
-public class Block : MonoBehaviour
+public class Steel : MonoBehaviour
 {
-    public void Initialize(Color _color, int _blockIndex, 
+    public void Initialize(Color _color, int _steelIndex, 
         List<Vector3> _positions, Vector3 _source, Vector3 _sink,
         float[] _moveTime, float[] _finishTime, float[] _startTime)
     {
         originalColor = _color;
-        blockindex = _blockIndex;
+        steelindex = _steelIndex;
         positions = new List<Vector3>(_positions);// 깊은 복사로 변경 
         movetime = _moveTime;
         finishtime = _finishTime;
         starttime = _startTime;
-        source = _source;
         positions[0] = _source;
+        source = _source;
         currentPosition = _source;
         sink = _sink;
 
@@ -42,8 +42,8 @@ public class Block : MonoBehaviour
     }
 
     public List<Vector3> positions;
-    public Vector3 source;
     public Vector3 sink;
+    public Vector3 source;
     public int currentindex = 0; // 앞으로 position이나 time array 의 값을 참조할 때 사용할 index 변수
     public Vector3 currentPosition;     // 현재 위치
     public Vector3 targetPosition;      // 목표 위치
@@ -59,14 +59,14 @@ public class Block : MonoBehaviour
     public float[] movetime;
     public float[] starttime;
     private int num_process;
-    public int blockindex;
+    public int steelindex;
     private float timer1 = 0.0f;          
     private float timer2;
     private float target_delta;
 
     public bool isFinished;
 
-    public Renderer blockrenderer;
+    public Renderer steelrenderer;
 
     void SetColor(Color _color)
     {
@@ -75,17 +75,18 @@ public class Block : MonoBehaviour
 
     void Start()
     {
-        // 각 block의 완료 여부를 감지하는 변수를 초기화
+        // 각 steel의 완료 여부를 감지하는 변수를 초기화
         isFinished = false;
 
 
         // 처음에 (0,0,0)으로 초기화되어 있는 각각의 positions 리스트에서, 각자 처음 배정받은 source의 위치를 추가
         // Initialize()로 지정받은 처음 source 위치로 이동
+
         transform.position = source;
         targetPosition = source;
 
-        blockrenderer = GetComponent<Renderer>();
-        blockrenderer.material.color = originalColor;
+        steelrenderer = GetComponent<Renderer>();
+        steelrenderer.material.color = originalColor;
         darkColor = CreateDarkColor(originalColor);
 
         num_process = starttime.Length; // 실제로는 GameManager에서 지정했던 numProcess보다 1 큰 값을 갖게 됨 (source가 포함되었기 때문)
@@ -103,7 +104,7 @@ public class Block : MonoBehaviour
             if (isFinished == false)
             {
                 currentPosition = transform.position;
-                blockrenderer.material.color = Color.black;
+                steelrenderer.material.color = Color.black;
                 moveProgress = 0.0f;
                 targetPosition = sink;
             }
@@ -122,7 +123,7 @@ public class Block : MonoBehaviour
             colorChangeProgress = 0.0f;
             
             colorChangeDuration = finishtime[currentindex] - starttime[currentindex];
-            blockrenderer.material.color = originalColor;
+            steelrenderer.material.color = originalColor;
 
             // 다음 timer2 호출 시점을 계산
             if (currentindex != num_process - 1) // 만약 마지막 process가 아니라면
@@ -139,7 +140,7 @@ public class Block : MonoBehaviour
         if (timer1 >= movetime[currentindex] && timer1 <= starttime[currentindex])
         {
             // 이동하는 동안에는 darkColor를 유지
-            blockrenderer.material.color = darkColor;
+            steelrenderer.material.color = darkColor;
             Move();
         }
         else
@@ -152,12 +153,12 @@ public class Block : MonoBehaviour
             }
             if(timer1 > starttime[currentindex] && timer1 < finishtime[currentindex])
             {
-                blockrenderer.material.color = originalColor;
+                steelrenderer.material.color = originalColor;
                 //UpdateColorOverTime();
             }
             else
             {
-                blockrenderer.material.color = darkColor;
+                steelrenderer.material.color = darkColor;
             }
         }
         
@@ -178,7 +179,6 @@ public class Block : MonoBehaviour
         transform.position = Vector3.Lerp(currentPosition, targetPosition, moveProgress);
     }
 
-
     // 시간이 지나면서 색상이 변하는 함수
     void UpdateColorOverTime()
     {
@@ -188,6 +188,6 @@ public class Block : MonoBehaviour
         // 색상 변화 진행 상태에 따라 색상 보간 (Lerp 사용)
         Color currentColor = Color.Lerp(originalColor, processColor, colorChangeProgress);
         
-        blockrenderer.material.color = currentColor;
+        steelrenderer.material.color = currentColor;
     }
 }
