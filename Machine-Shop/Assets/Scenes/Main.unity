@@ -157,8 +157,9 @@ MonoBehaviour:
     type: 3}
   colorPath: color.csv
   positionPath: position.csv
+  timePath: time.csv
   parent: {fileID: 0}
-  isFinished: 0
+  isfinished: 0
 --- !u!4 &530471197
 Transform:
   m_ObjectHideFlags: 0
@@ -303,7 +304,7 @@ Camera:
   far clip plane: 1000
   field of view: 60
   orthographic: 1
-  orthographic size: 3
+  orthographic size: 10
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -327,13 +328,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 991324251}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.29565006, y: 0.30190912, z: -0.082799464, w: 0.90254426}
-  m_LocalPosition: {x: -6.03, y: 8.14, z: -8.69}
+  m_LocalRotation: {x: 0.24467087, y: 0.66342765, z: -0.24467084, w: 0.66342765}
+  m_LocalPosition: {x: -16.618647, y: 20.093756, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 35.709, y: 37.652, z: 2.051}
+  m_LocalEulerAnglesHint: {x: 40.488, y: 90, z: 0}
 --- !u!1 &1491739279
 GameObject:
   m_ObjectHideFlags: 0
