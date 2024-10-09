@@ -303,7 +303,7 @@ Camera:
   far clip plane: 1000
   field of view: 60
   orthographic: 1
-  orthographic size: 3
+  orthographic size: 5
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -328,7 +328,7 @@ Transform:
   m_GameObject: {fileID: 991324251}
   serializedVersion: 2
   m_LocalRotation: {x: 0.29565006, y: 0.30190912, z: -0.082799464, w: 0.90254426}
-  m_LocalPosition: {x: -6.03, y: 8.14, z: -8.69}
+  m_LocalPosition: {x: -4.91, y: 7.69, z: -9.96}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

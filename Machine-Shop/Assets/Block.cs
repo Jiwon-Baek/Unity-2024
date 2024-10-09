@@ -12,10 +12,11 @@ public class Block : MonoBehaviour
     {
         originalColor = _color;
         blockindex = _blockIndex;
-        positions = _positions;
+        positions = new List<Vector3>(_positions);// 깊은 복사로 변경 
         movetime = _moveTime;
         finishtime = _finishTime;
         starttime = _startTime;
+        positions[0] = _source;
         currentPosition = _source;
         sink = _sink;
 
@@ -57,63 +58,45 @@ public class Block : MonoBehaviour
     public float[] starttime;
     private int num_process;
     public int blockindex;
-    private float timer = 0.0f;          
-    private float delta;
+    private float timer1 = 0.0f;          
+    private float timer2;
     private float target_delta;
 
     public bool isFinished;
 
     public Renderer blockrenderer;
-    private float eps = 0.2f;
 
     void SetColor(Color _color)
     {
         originalColor = _color;
     }
 
-    //void SetPositions(Vector3[] _positions)
-    //{
-    //    positions = _positions;
-    //}
-
-    //void SetTimeVariables(float[] _movetime, float[] _finishtime, float[] _starttime)
-    //{
-    //    movetime = _movetime;
-    //    finishtime = _finishtime;
-    //    starttime = _starttime;
-    //}
-
     void Start()
     {
+        // 각 block의 완료 여부를 감지하는 변수를 초기화
         isFinished = false;
-        transform.position = currentPosition;
-        positions[0] = transform.position;
+
+
+        // 처음에 (0,0,0)으로 초기화되어 있는 각각의 positions 리스트에서, 각자 처음 배정받은 source의 위치를 추가
+        // Initialize()로 지정받은 처음 source 위치로 이동
+        transform.position = positions[0];
         targetPosition = positions[0];
+
         blockrenderer = GetComponent<Renderer>();
         blockrenderer.material.color = originalColor;
-
-        if (blockrenderer == null)
-        {
-            Debug.LogError("Renderer component not found on the object!");
-            return;
-        }
-
         darkColor = CreateDarkColor(originalColor);
 
-        num_process = starttime.Length;
-        delta = movetime[0];
+        num_process = starttime.Length; // 실제로는 GameManager에서 지정했던 numProcess보다 1 큰 값을 갖게 됨 (source가 포함되었기 때문)
+        timer2 = movetime[0];
         target_delta = movetime[1] - movetime[0];
-        //target_delta = movetime[0] - 0.0f;
-        // Debug.Log("Block" + blockindex + "has to wait till " + target_delta);
-        SetTarget(positions[0]);
 
     }
     
     
     void Update()
     {
-        
-        if (timer >= finishtime[finishtime.Length - 1])
+        // 작업 완료 여부를 판단
+        if (timer1 >= finishtime[finishtime.Length - 1])
         {
             if (isFinished == false)
             {
@@ -123,36 +106,37 @@ public class Block : MonoBehaviour
                 targetPosition = sink;
             }
             
-            Sink();
-
+            Move();
             isFinished = true;
             return;
         }
-        // Part 2
-        if (delta > target_delta) // 단 한 번 호출되는 함수. movetime 도달을 제어
+
+        // 현재 시점이 index를 update하는 시점인지를 timer2를 통해 감지하고 제어
+        if (timer2 > target_delta) // 단 한 번 호출되는 함수
         {
-            delta = 0.0f;
-            // 0.5에 timer로 0.5를 감지해서 update
+            timer2 = 0.0f;
             currentindex += 1; // 0에서 1로 변경
-            SetTarget(positions[currentindex]);
             moveProgress = 0.0f;
             colorChangeProgress = 0.0f;
+            
             colorChangeDuration = finishtime[currentindex] - starttime[currentindex];
             blockrenderer.material.color = originalColor;
 
-            if (currentindex != num_process - 1) // 만약 마지막 process가 아니라면, 1 더해줌
+            // 다음 timer2 호출 시점을 계산
+            if (currentindex != num_process - 1) // 만약 마지막 process가 아니라면
             {
                 target_delta = movetime[currentindex + 1] - movetime[currentindex];
             }
-            else
+            else // 만약 마지막 process라면, 다음 timer2 호출 시점은 없음
             {
                 target_delta = float.MaxValue;
             }
 
         }
 
-        if (timer >= movetime[currentindex] && timer <= starttime[currentindex])
+        if (timer1 >= movetime[currentindex] && timer1 <= starttime[currentindex])
         {
+            // 이동하는 동안에는 darkColor를 유지
             blockrenderer.material.color = darkColor;
             Move();
         }
@@ -160,11 +144,12 @@ public class Block : MonoBehaviour
         {
             if (transform.position != targetPosition)
             {
+                // Recording 시 Move()가 한 프레임씩 덜 호출되는 문제가 있음. 
+                // 이를 방지하기 위해 Move하기로 지정된 시간 이외에도 아직 target에 도달하지 못한 경우 Move()를 이어가도록 수정
                 Move();
             }
-            if(timer > starttime[currentindex] && timer < finishtime[currentindex])
+            if(timer1 > starttime[currentindex] && timer1 < finishtime[currentindex])
             {
-                check_arrival();
                 blockrenderer.material.color = originalColor;
                 //UpdateColorOverTime();
             }
@@ -175,37 +160,12 @@ public class Block : MonoBehaviour
         }
         
         // 타이머 증가
-        timer += Time.deltaTime;
-        delta += Time.deltaTime;
-        // Debug.Log("Time:"+timer+"| colorprogress: "+colorChangeProgress+ "| colorduration: " + colorChangeDuration);
+        timer1 += Time.deltaTime;
+        timer2 += Time.deltaTime;
         
     }
-    void check_arrival()
-    {
-        if (transform.position == targetPosition)
-        {
-            currentPosition = transform.position;
-        }
-    }
-    void SetTarget(Vector3 newtarget)
-    {
-        // 라인 A와 라인 B에 따라 목표 위치 설정
-        targetPosition = newtarget;
-        
-        // 현재 위치 갱신
-        currentPosition = transform.position;
-    }
-    void Sink()
-    {
-        // 이동 진행 상태 (0.0 ~ 1.0) 계산
-        moveProgress += Time.deltaTime / movingTime;
 
-        // 현재 위치에서 목표 위치로 이동 (Lerp 사용)
-        transform.position = Vector3.Lerp(currentPosition, targetPosition, moveProgress);
 
-        // 이동 중 로그 출력
-        //Debug.Log("Block " + blockindex + " is moving towards: " + targetPosition);
-    }
     // 지정된 목표 위치로 0.5초 동안 이동하는 함수
     void Move()
     {
@@ -214,9 +174,6 @@ public class Block : MonoBehaviour
 
         // 현재 위치에서 목표 위치로 이동 (Lerp 사용)
         transform.position = Vector3.Lerp(currentPosition, targetPosition, moveProgress);
-
-        // 이동 중 로그 출력
-        //Debug.Log("Block " + blockindex + " is moving towards: " + targetPosition);
     }
 
     // 시간이 지나면서 색상이 변하는 함수
