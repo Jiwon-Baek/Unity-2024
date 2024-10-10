@@ -157,7 +157,7 @@ MonoBehaviour:
     type: 3}
   colorPath: color.csv
   positionPath: position.csv
-  timePath: time.csv
+  timePath: time_ATCS.csv
   parent: {fileID: 0}
   isfinished: 0
 --- !u!4 &530471197
@@ -328,13 +328,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 991324251}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.24467087, y: 0.66342765, z: -0.24467084, w: 0.66342765}
-  m_LocalPosition: {x: -16.618647, y: 20.093756, z: 0}
+  m_LocalRotation: {x: 0.33422482, y: 0.6231322, z: -0.3342248, w: 0.6231322}
+  m_LocalPosition: {x: -11.71, y: 23.35, z: 3.45}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 40.488, y: 90, z: 0}
+  m_LocalEulerAnglesHint: {x: 56.415, y: 90, z: 0}
 --- !u!1 &1491739279
 GameObject:
   m_ObjectHideFlags: 0

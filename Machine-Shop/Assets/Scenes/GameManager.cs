@@ -9,8 +9,7 @@ using System;
 class Job
 {
     public Job(Color _color, int _blockindex, GameObject prefab, 
-        Vector3 _position, Vector3 _source, Vector3 _sink, 
-        float[] _timetable)
+        Vector3 _position, Vector3 _source, Vector3 _sink, float[] _timetable)
     {
         
         // Instantiate는 static 메서드이므로 Object.Instantiate로 호출해야 합니다.
@@ -56,17 +55,17 @@ public class GameManager : MonoBehaviour
     public GameObject ProcessPrefab;
 
 
-    public string colorPath = "color.csv"; // CSV 파일 경로 (프로젝트 폴더 내)
-    public string positionPath = "position.csv";
-    public string timePath = "time.csv";
+    private string colorPath = "color.csv"; // CSV 파일 경로 (프로젝트 폴더 내)
+    private string positionPath = "position.csv";
+    private string timePath = "time_ATCS.csv";
     private List<Color> colorData; // CSV 파일로부터 읽은 RGB 값들 저장
     private List<Vector3> positionData;
-    private List<Tuple<int, int, float, float, float, float, float>> timeData;
+    private List<(int idx, int machine, float release, float move, float setup, float start, float finish, int jobSetup, int machineSetup)> timeData;
     public Transform parent;
     static int numBlocks = 100;
     static int numMachine = 5;
     static int numProcesses = 1;
-
+    private int sink_idx;
     public bool isfinished;
 
     // Job 객체 배열 선언
@@ -83,19 +82,19 @@ public class GameManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        Time.timeScale = 3f;
+        Time.timeScale = 10f;
         // 1. CSV 파일 읽기
         colorData = ReadColorsFromCSV(colorPath);
         positionData = ReadPositionFromCSV(positionPath);
         timeData = ReadTimeTableFromCSV(timePath);
         num_created = 0;
-
+        sink_idx = 0;
         // Job 배열 크기 지정
         jobs = new Job[numBlocks];  // 3개의 Job을 담을 수 있는 배열 생성
         machines = new Machine[numMachine];
 
         source = stackPositions(10, 0.0f, 0.0f, 6.0f, 0.6f, -0.6f);
-        sink = stackPositions(10, 16.0f, 0.0f, 2.0f, -0.6f, -0.6f);
+        sink = stackPositions(10, 11.0f, 0.0f, 2.0f, -0.6f, -0.6f);
         
         // 각각의 Job 객체 생성
         for (int d = 0; d < numBlocks; d++)
@@ -109,7 +108,7 @@ public class GameManager : MonoBehaviour
             Debug.Log(positionData[timeData[d].Item2]);
 
             float[] timetable = new float[] { timeData[d].Item3, timeData[d].Item4, timeData[d].Item5, timeData[d].Item6, timeData[d].Item7 };
-            jobs[d] = new Job(colorData[coloridx], d, BlockPrefab,
+            jobs[d] = new Job(colorData[timeData[d].Item8], d, BlockPrefab,
             positionData[timeData[d].Item2], source[d], sink[d], timetable);
         }
 
@@ -150,11 +149,21 @@ public class GameManager : MonoBehaviour
     {
 
         int count = 0;
+        
         for (int i = 0; i < jobs.Length; i++)
         {
             if (jobs[i].block.GetComponent<Block>().isFinished == true)
             {
+                if (!jobs[i].block.GetComponent<Block>().isSinkUpdated)
+                {
+                    jobs[i].block.GetComponent<Block>().SetSink(sink[sink_idx]);
+                    sink_idx++;
+                    jobs[i].block.GetComponent<Block>().isSinkUpdated = true;
+                    Debug.Log("Block " + jobs[i].block.GetComponent<Block>().blockindex + " is assigned Sink " + sink_idx);
+                }
+                
                 count++;
+
             }
         }
 
@@ -168,9 +177,9 @@ public class GameManager : MonoBehaviour
             return false;
         }
     }
-    List<Tuple<int, int, float, float, float, float, float>> ReadTimeTableFromCSV(string file)
+    List<(int idx, int machine, float release, float move, float setup, float start, float finish, int jobSetup, int machineSetup)> ReadTimeTableFromCSV(string file)
     {
-        List<Tuple<int, int, float, float, float, float, float>> timeCriteria = new List<Tuple<int, int, float, float, float, float, float>>();
+        var log = new List<(int idx, int machine, float release, float move, float setup, float start, float finish, int jobSetup, int machineSetup)>();
 
         string path = Path.Combine(Application.dataPath, file);  // 파일 경로
 
@@ -188,10 +197,12 @@ public class GameManager : MonoBehaviour
                 // float setup = float.Parse(values[4], CultureInfo.InvariantCulture);
                 float setup = float.Parse(values[3], CultureInfo.InvariantCulture) + 2.0f;
                 float start = float.Parse(values[5], CultureInfo.InvariantCulture); 
-                float finish = float.Parse(values[6], CultureInfo.InvariantCulture);  
+                float finish = float.Parse(values[6], CultureInfo.InvariantCulture);
+                int jobSetup = int.Parse(values[7], CultureInfo.InvariantCulture);
+                int machineSetup = int.Parse(values[8], CultureInfo.InvariantCulture);
 
-                // Tuple을 리스트에 추가
-                timeCriteria.Add(Tuple.Create(idx, machine, release, move, setup, start, finish));
+                // ValueTuple을 리스트에 추가
+                log.Add((idx, machine, release, move, setup, start, finish, jobSetup, machineSetup));
             }
 
         }
@@ -200,7 +211,7 @@ public class GameManager : MonoBehaviour
             Debug.LogError("CSV file not found at: " + path);
         }
 
-        return timeCriteria;
+        return log;
 
     }
     // CSV 파일에서 RGB 값을 읽어와서 List<float[3]> 형태로 저장

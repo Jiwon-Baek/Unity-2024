@@ -7,8 +7,7 @@ using UnityEngine;
 public class Block : MonoBehaviour
 {
     public void Initialize(Color _color, int _blockIndex, 
-        Vector3 _source, Vector3 _position, Vector3 _sink,
-        float[] timetable)
+        Vector3 _source, Vector3 _position, Vector3 _sink, float[] timetable)
     {
         originalColor = _color;
         blockindex = _blockIndex;
@@ -23,6 +22,11 @@ public class Block : MonoBehaviour
         source = _source;
         position = _position;
         sink = _sink;
+    }
+
+    public void SetSink(Vector3 newsink)
+    {
+        sink = newsink;
     }
 
     Color CreateDarkColor(Color originalColor)
@@ -65,7 +69,7 @@ public class Block : MonoBehaviour
     private float T_start;
     private float T_finish;
     private float T_end;
-
+    public bool isSinkUpdated;
     public int blockindex;
 
     private float timer1 = 0.0f;          
@@ -82,6 +86,7 @@ public class Block : MonoBehaviour
 
     void Start()
     {
+        isSinkUpdated = false;
         isFinished = false;
         transform.position = currentPosition;
         targetPosition = source;
@@ -134,6 +139,7 @@ public class Block : MonoBehaviour
                 // move to Sink
                 currentPosition = transform.position;
                 blockrenderer.material.color = Color.black;
+                isFinished = true;
                 moveProgress = 0.0f;
                 targetPosition = sink;
                 Sink();
@@ -173,7 +179,7 @@ public class Block : MonoBehaviour
         moveProgress += Time.deltaTime / movingTime;
 
         // 현재 위치에서 목표 위치로 이동 (Lerp 사용)
-        transform.position = Vector3.Lerp(currentPosition, targetPosition, moveProgress);
+        transform.position = Vector3.Lerp(currentPosition, sink, moveProgress);
 
         // 이동 중 로그 출력
         //Debug.Log("Block " + blockindex + " is moving towards: " + targetPosition);
