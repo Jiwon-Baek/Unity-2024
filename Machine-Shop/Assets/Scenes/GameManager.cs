@@ -19,7 +19,7 @@ class Job
         // 초기화 메서드 호출
         blockComp.Initialize(_color, _blockindex, _source, _position, _sink, _timetable);
         Debug.Log("Job" + _blockindex + " Created!");
-        block.SetActive(false);
+        // block.SetActive(false);
     }
 
     public void Activate()
