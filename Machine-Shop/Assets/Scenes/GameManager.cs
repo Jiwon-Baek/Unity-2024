@@ -19,6 +19,7 @@ class Job
         // 초기화 메서드 호출
         blockComp.Initialize(_color, _blockindex, _source, _position, _sink, _timetable);
         Debug.Log("Job" + _blockindex + " Created!");
+        block.SetActive(false);
     }
 
     public void Activate()
@@ -55,9 +56,10 @@ public class GameManager : MonoBehaviour
     public GameObject ProcessPrefab;
 
 
-    private string colorPath = "color.csv"; // CSV 파일 경로 (프로젝트 폴더 내)
-    private string positionPath = "position.csv";
-    private string timePath = "time_ATCS.csv";
+    public string colorPath = "color.csv"; // CSV 파일 경로 (프로젝트 폴더 내)
+    public string positionPath = "position.csv";
+    public string timePath = "time_ATCS.csv";
+    public int hFactor = 0;
     private List<Color> colorData; // CSV 파일로부터 읽은 RGB 값들 저장
     private List<Vector3> positionData;
     private List<(int idx, int machine, float release, float move, float setup, float start, float finish, int jobSetup, int machineSetup)> timeData;
@@ -93,8 +95,8 @@ public class GameManager : MonoBehaviour
         jobs = new Job[numBlocks];  // 3개의 Job을 담을 수 있는 배열 생성
         machines = new Machine[numMachine];
 
-        source = stackPositions(10, 0.0f, 0.0f, 6.0f, 0.6f, -0.6f);
-        sink = stackPositions(10, 11.0f, 0.0f, 2.0f, -0.6f, -0.6f);
+        source = stackPositions(10, 0.0f, 0.0f, 1.0f, 0.6f, -0.6f);
+        sink = stackPositions(10, 11.4f, 0.0f, 6.4f, -0.6f, -0.6f);
         
         // 각각의 Job 객체 생성
         for (int d = 0; d < numBlocks; d++)
@@ -228,7 +230,7 @@ public class GameManager : MonoBehaviour
                 string[] values = line.Split(',');  // 쉼표로 값들을 분리
                 float x = float.Parse(values[0], CultureInfo.InvariantCulture);  // Red
                 float y = float.Parse(values[1], CultureInfo.InvariantCulture);  // Green
-                float z = float.Parse(values[2], CultureInfo.InvariantCulture);  // Blue
+                float z = float.Parse(values[2], CultureInfo.InvariantCulture) - 12.0f * hFactor;  // Blue
 
                 positions.Add(new Vector3(x, y, z));  // float[3]로 저장
             }
@@ -280,7 +282,7 @@ public class GameManager : MonoBehaviour
         {
             a = i / n_row;
             b = i % n_row;
-            sources.Add(new Vector3(startX + xOffset * a, startY, startZ + zOffset * b));
+            sources.Add(new Vector3(startX + xOffset * a, startY, startZ - 12.0f * hFactor + zOffset * b));
             
         }
         return sources;
