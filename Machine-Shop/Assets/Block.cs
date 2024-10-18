@@ -64,7 +64,6 @@ public class Block : MonoBehaviour
     public bool isFinished;
 
     public Renderer blockrenderer;
-    private float eps = 0.2f;
 
     void SetColor(Color _color)
     {

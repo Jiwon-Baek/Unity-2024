@@ -133,7 +133,7 @@ GameObject:
   - component: {fileID: 530471197}
   - component: {fileID: 530471196}
   m_Layer: 0
-  m_Name: GameManager
+  m_Name: ConnectedShop
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -157,6 +157,7 @@ MonoBehaviour:
     type: 3}
   colorPath: color.csv
   positionPath: position.csv
+  timePath: time.csv
   parent: {fileID: 0}
   isFinished: 0
 --- !u!4 &530471197
