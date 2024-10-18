@@ -56,6 +56,7 @@ public class Block : MonoBehaviour
     public Vector3 targetPosition;      // 목표 위치
     //public Color processColor = Color.green;  // 진행중일 때의 색상
     public Color originalColor;              // 원래 색상
+    public Color transparentColor;              // 원래 색상
     public Color darkColor;
 
     public float movingTime = 2.0f;     // 이동 시간 (0.5초)
@@ -86,12 +87,17 @@ public class Block : MonoBehaviour
 
     void Start()
     {
+        // originalColor.a = 0.0f;
+
         isSinkUpdated = false;
         isFinished = false;
         transform.position = currentPosition;
         targetPosition = source;
+        transparentColor = originalColor;
+        transparentColor.a = 0.0f;
         blockrenderer = GetComponent<Renderer>();
-        blockrenderer.material.color = originalColor;
+        // blockrenderer.material.color = originalColor;
+        blockrenderer.material.color = transparentColor;
         if (blockrenderer == null)
         {
             Debug.LogError("Renderer component not found on the object!");
@@ -110,11 +116,13 @@ public class Block : MonoBehaviour
             Sink();
             return;
         }
-        
+
         if (timer1 >= T_created)
         {
+            blockrenderer.material.color = originalColor;
             if (timer1 >= T_move && timer1 <= T_setup)
             {
+
                 SetTarget(position);
                 blockrenderer.material.color = darkColor;
                 Move();
@@ -148,6 +156,10 @@ public class Block : MonoBehaviour
             {
                 // wait
             }
+
+        }
+        else
+        {
 
         }
 

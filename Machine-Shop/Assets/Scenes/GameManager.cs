@@ -19,6 +19,7 @@ class Job
         // 초기화 메서드 호출
         blockComp.Initialize(_color, _blockindex, _source, _position, _sink, _timetable);
         Debug.Log("Job" + _blockindex + " Created!");
+        block.SetActive(true);
         // block.SetActive(false);
     }
 
@@ -137,7 +138,8 @@ public class GameManager : MonoBehaviour
 
         if (timer >= timeData[num_created].Item3)
         {
-            jobs[num_created].Activate();
+            // jobs[num_created].Activate();
+            
             if (num_created <numBlocks - 1)
             {
                 num_created++;
