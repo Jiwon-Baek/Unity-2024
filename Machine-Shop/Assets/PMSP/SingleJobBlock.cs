@@ -4,7 +4,7 @@ using UnityEngine;
 
 
 
-public class Block : MonoBehaviour
+public class SingleJobBlock : MonoBehaviour
 {
     public void Initialize(Color _color, int _blockIndex, 
         Vector3 _source, Vector3 _position, Vector3 _sink, float[] timetable)
