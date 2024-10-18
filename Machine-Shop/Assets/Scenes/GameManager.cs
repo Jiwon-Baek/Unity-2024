@@ -4,6 +4,8 @@ using UnityEngine;
 using System.IO;  // for File I/O
 using System.Globalization;  // for converting strings to floats
 
+using System.Linq;
+using System;
 
 class Job
 {
@@ -13,7 +15,7 @@ class Job
     {
         
         // Instantiate는 static 메서드이므로 Object.Instantiate로 호출해야 합니다.
-        block = Object.Instantiate(prefab);
+        block = UnityEngine.Object.Instantiate(prefab);
         // 생성한 인스턴스에서 Block 컴포넌트 가져오기
         Block blockComp = block.GetComponent<Block>();
         // 초기화 메서드 호출
@@ -35,7 +37,7 @@ class Machine
     {
 
         // Instantiate는 static 메서드이므로 Object.Instantiate로 호출해야 합니다.
-        process = Object.Instantiate(prefab);
+        process = UnityEngine.Object.Instantiate(prefab);
         // 생성한 인스턴스에서 Block 컴포넌트 가져오기
         Process processComp = process.GetComponent<Process>();
         processComp.transform.position = initialPosition;
@@ -57,7 +59,7 @@ public class GameManager : MonoBehaviour
 
     public string colorPath = "color.csv"; // CSV 파일 경로 (프로젝트 폴더 내)
     public string positionPath = "position.csv";
-    public string timePath = "time.csv";
+    public string timePath = "ATCS.csv";
 
     private List<Color> colorData; // CSV 파일로부터 읽은 RGB 값들 저장
     private List<Vector3> positionData;
@@ -133,7 +135,7 @@ public class GameManager : MonoBehaviour
             List<float> rnd = new List<float>();
             for (int u = 0; u < numProcesses; u++)
             {
-                rnd.Add(Random.Range(1.0f, 1.5f));
+                rnd.Add(UnityEngine.Random.Range(1.0f, 1.5f));
             }
             for (int i = 0; i < numProcesses; i++)
             {
