@@ -148,7 +148,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 530471195}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 87a8e69626d50854bab299d170c7415e, type: 3}
+  m_Script: {fileID: 11500000, guid: 1202a93f20ce039489164f2d84ae13b2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   BlockPrefab: {fileID: 507142347858533909, guid: dddfd54a42c353247a047cd88ed81823,
@@ -270,7 +270,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 706381739}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 87a8e69626d50854bab299d170c7415e, type: 3}
+  m_Script: {fileID: 11500000, guid: 1202a93f20ce039489164f2d84ae13b2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   BlockPrefab: {fileID: 507142347858533909, guid: dddfd54a42c353247a047cd88ed81823,
@@ -324,7 +324,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 943017672}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 87a8e69626d50854bab299d170c7415e, type: 3}
+  m_Script: {fileID: 11500000, guid: 1202a93f20ce039489164f2d84ae13b2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   BlockPrefab: {fileID: 507142347858533909, guid: dddfd54a42c353247a047cd88ed81823,
@@ -333,7 +333,7 @@ MonoBehaviour:
     type: 3}
   colorPath: color.csv
   positionPath: position.csv
-  timePath: ATCS.csv
+  timePath: ../PMSP/ATCS.csv
   hFactor: 1
   parent: {fileID: 0}
   isfinished: 0
@@ -470,7 +470,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1099653184}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 87a8e69626d50854bab299d170c7415e, type: 3}
+  m_Script: {fileID: 11500000, guid: 1202a93f20ce039489164f2d84ae13b2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   BlockPrefab: {fileID: 507142347858533909, guid: dddfd54a42c353247a047cd88ed81823,

@@ -51,7 +51,7 @@ class Machine
 
 
 
-public class GameManager : MonoBehaviour
+public class PMSP : MonoBehaviour
 {
     public GameObject BlockPrefab;
     public GameObject ProcessPrefab;
