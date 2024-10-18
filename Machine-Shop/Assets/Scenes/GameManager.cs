@@ -57,11 +57,16 @@ public class GameManager : MonoBehaviour
 
     public string colorPath = "color.csv"; // CSV 파일 경로 (프로젝트 폴더 내)
     public string positionPath = "position.csv";
+    public string timePath = "time.csv";
+
     private List<Color> colorData; // CSV 파일로부터 읽은 RGB 값들 저장
     private List<Vector3> positionData;
+    private List<(int idx, int machine, float move, float start, float finish)> timeData;
+
     public Transform parent;
-    static int numBlocks = 15;
-    static int numProcesses = 10;
+    static int numBlocks = 10;
+    static int numProcesses = 5+3;
+    private int sink_idx;
 
     public bool isFinished;
 
@@ -72,25 +77,30 @@ public class GameManager : MonoBehaviour
     private Vector3 processposition;
     private Vector3 machineposition;
     int count;
+    float movingtime = 0.5f;
     List<Vector3> source;
     List<Vector3> sink;
-
+    private float timer = 0.0f;
+    int num_created;
 
     // Start is called before the first frame update
     void Start()
     {
         Time.timeScale = 2f;
         // 1. CSV 파일 읽기
+        // 1. CSV 파일 읽기
+        timeData = ReadTimeTableFromCSV(timePath);
         colorData = ReadColorsFromCSV(colorPath);
         positionData = ReadPositionFromCSV(positionPath);
-
+        num_created = 0;
+        sink_idx = 0;
 
         // Job 배열 크기 지정
         jobs = new Job[numBlocks];  // 3개의 Job을 담을 수 있는 배열 생성
         machines = new Machine[numProcesses];
 
         source = stackPositions(5, 0.0f, 0.0f, 1.5f, 0.6f, -0.6f);
-        sink = stackPositions(5, -2.0f, 0.0f, -2.0f, -0.6f, 0.6f);
+        sink = stackPositions(5, 15.0f, 0.0f, -2.0f, -0.6f, -0.6f);
 
         List<float[]> move = new List<float[]>();
         List<float[]> start = new List<float[]>();
@@ -232,6 +242,38 @@ public class GameManager : MonoBehaviour
         return positions;
     }
 
+    List<(int idx, int machine, float move, float start, float finish)> ReadTimeTableFromCSV(string file)
+    {
+        var log = new List<(int idx, int machine, float move, float start, float finish)>();
+
+        string path = Path.Combine(Application.dataPath, file);  // 파일 경로
+
+        if (File.Exists(path))
+        {
+            string[] lines = File.ReadAllLines(path);  // 모든 라인을 읽음
+
+            foreach (string line in lines.Skip(1))
+            {
+                string[] values = line.Split(',');  // 쉼표로 값들을 분리
+                int idx = int.Parse(values[0], CultureInfo.InvariantCulture);
+                int machine = int.Parse(values[1], CultureInfo.InvariantCulture);
+                float move = float.Parse(values[2], CultureInfo.InvariantCulture);
+                float start = move + movingtime;
+                float finish = float.Parse(values[3], CultureInfo.InvariantCulture);
+
+                // ValueTuple을 리스트에 추가
+                log.Add((idx, machine, move, start, finish));
+            }
+
+        }
+        else
+        {
+            Debug.LogError("CSV file not found at: " + path);
+        }
+
+        return log;
+
+    }
     // CSV 파일에서 RGB 값을 읽어와서 List<float[3]> 형태로 저장
     List<Color> ReadColorsFromCSV(string file)
     {
