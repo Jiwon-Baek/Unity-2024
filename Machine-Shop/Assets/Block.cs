@@ -70,18 +70,6 @@ public class Block : MonoBehaviour
         originalColor = _color;
     }
 
-    //void SetPositions(Vector3[] _positions)
-    //{
-    //    positions = _positions;
-    //}
-
-    //void SetTimeVariables(float[] _movetime, float[] _finishtime, float[] _starttime)
-    //{
-    //    movetime = _movetime;
-    //    finishtime = _finishtime;
-    //    starttime = _starttime;
-    //}
-
     void Start()
     {
         isFinished = false;
@@ -131,7 +119,11 @@ public class Block : MonoBehaviour
         if (delta > target_delta) // 단 한 번 호출되는 함수. movetime 도달을 제어
         {
             delta = 0.0f;
-            // 0.5에 timer로 0.5를 감지해서 update
+            if (blockindex == 1)
+            {
+                Debug.Log("At" + timer + ", Job " + blockindex + "set target to " + (positions[currentindex].x, positions[currentindex].y, positions[currentindex].z));
+            }
+
             currentindex += 1; // 0에서 1로 변경
             SetTarget(positions[currentindex]);
             moveProgress = 0.0f;

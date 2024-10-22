@@ -56,10 +56,9 @@ public class GameManager : MonoBehaviour
     public GameObject BlockPrefab;
     public GameObject ProcessPrefab;
 
-
     public string colorPath = "color.csv"; // CSV 파일 경로 (프로젝트 폴더 내)
     public string positionPath = "position.csv";
-    public string timePath = "ATCS.csv";
+    public string timePath = "time.csv";
 
     private List<Color> colorData; // CSV 파일로부터 읽은 RGB 값들 저장
     private List<Vector3> positionData;
@@ -67,14 +66,14 @@ public class GameManager : MonoBehaviour
 
     public Transform parent;
     static int numBlocks = 10;
-    static int numProcesses = 5+3;
-    private int sink_idx;
+    static int numProcesses = 7;
+    // private int sink_idx;
 
     public bool isFinished;
 
     // Job 객체 배열 선언
     private Job[] jobs;  // Job[] 타입으로 선언
-    private Machine[] machines;
+    List<Machine> machines = new List<Machine>();
     private Vector3 pos;
     private Vector3 processposition;
     private Vector3 machineposition;
@@ -82,108 +81,88 @@ public class GameManager : MonoBehaviour
     float movingtime = 0.5f;
     List<Vector3> source;
     List<Vector3> sink;
-    private float timer = 0.0f;
-    int num_created;
+    List<Vector3> buffer;
+
+    // private float timer = 0.0f;
+    // int num_created;
 
     // Start is called before the first frame update
     void Start()
     {
-        Time.timeScale = 2f;
+        Time.timeScale = 12f;
         // 1. CSV 파일 읽기
         // 1. CSV 파일 읽기
         timeData = ReadTimeTableFromCSV(timePath);
         colorData = ReadColorsFromCSV(colorPath);
         positionData = ReadPositionFromCSV(positionPath);
-        num_created = 0;
-        sink_idx = 0;
+        // num_created = 0;
+        // sink_idx = 0;
 
         // Job 배열 크기 지정
         jobs = new Job[numBlocks];  // 3개의 Job을 담을 수 있는 배열 생성
-        machines = new Machine[numProcesses];
 
-        source = stackPositions(5, 0.0f, 0.0f, 1.5f, 0.6f, -0.6f);
-        sink = stackPositions(5, 15.0f, 0.0f, -2.0f, -0.6f, -0.6f);
+        source = stackPositions(5, -1.0f, 0.0f, 1.2f, 0.6f, -0.6f);
+        sink = stackPositions(5, 18.0f, 0.0f, 1.2f, -0.6f, -0.6f);
 
-        List<float[]> move = new List<float[]>();
-        List<float[]> start = new List<float[]>();
-        List<float[]> finish = new List<float[]>();
-        float interval = 2.0f;
-        List<float> t = new List<float>();
-        for (int u = 0; u < numProcesses; u++)
-        {
-            t.Add(interval * u);
-        }
-
-        for (int v = 0; v< numBlocks; v++)
-        {
-            // 새로운 배열을 생성 (첫 번째 요소는 0.0f, 나머지는 t[i] + 0.5f)
-            float[] _move = new float[1+numProcesses];
-            float[] _start = new float[1+numProcesses];
-            float[] _finish = new float[1+numProcesses];
-            _move[0] = 0.0f;  // 첫 번째 값은 0.0f
-            _start[0] = 0.0f;  // 첫 번째 값은 0.0f
-            _finish[0] = 0.0f;  // 첫 번째 값은 0.0f
-        
-            for (int i = 0; i < numProcesses; i++)
-            {
-                _move[i + 1] = t[i];
-                _start[i + 1] = t[i] + 0.5f;  // t[i] + 0.5f를 result의 두 번째부터 채움
-            }
-
-            move.Add(_move);
-            start.Add(_start);
-            List<float> rnd = new List<float>();
-            for (int u = 0; u < numProcesses; u++)
-            {
-                rnd.Add(UnityEngine.Random.Range(1.0f, 1.5f));
-            }
-            for (int i = 0; i < numProcesses; i++)
-            {
-                _finish[i + 1] = t[i] + rnd[i];
-            }
-            finish.Add(_finish);
-            for (int u = 0; u < numProcesses; u++)
-            {
-                t[u] += interval;
-            }
-            
-        }
+        // buffer 좌표는 (10, 0, 0)
+        buffer = stackPositions(5, 10.0f, 0.0f, 1.2f, 0.0f, -0.6f);
             
         // 각각의 Job 객체 생성
         for (int d = 0; d < numBlocks; d++)
         {
+            List<Vector3> p_data = new List<Vector3>();
+            // processData 리스트를 p_data 리스트로 복사
+            p_data.AddRange(positionData);
+            for (int u = 0; u < 6; u++)
+            {
+                p_data[u] = positionData[u]; 
+                // 0 : source
+                // 1, 2, 3, 4, 5 : machine 1~5
+                // 6 : Buffer
+            }
+
+            // processData의 6번째 값(index = 5)을 새로운 값으로 교체
+            p_data[6] = buffer[d];  // 원하는 값을 넣으면 됩니다.
+            float[] m = ExtractData(timeData, d, 3);
+            p_data[7] = positionData[(int)m[0] + 1];
+            //p_data[8] = positionData[(int)m[0] + 1];
+            float[] move = ExtractData(timeData, d, 0);
+            float[] start = ExtractData(timeData, d, 1);
+            float[] finish = ExtractData(timeData, d, 2);
+
             int coloridx = d % colorData.Count;
+
             jobs[d] = new Job(colorData[coloridx], d, BlockPrefab,
-            positionData, source[d], sink[d],
-            move[d], finish[d], start[d]);
+            p_data, source[d], sink[d],
+            move, finish, start);
+            Debug.Log("---------------------------------------------");
+            Debug.Log("Job " + d);
+            // move 배열의 값들을 출력 (배열을 문자열로 변환)
+            string moveValues = string.Join(", ", move);  // move 배열의 요소들을 쉼표로 구분하여 문자열로 변환
+            Debug.Log("Move: " + moveValues);
+            string startValues = string.Join(", ", start);  // start 배열의 요소들을 쉼표로 구분하여 문자열로 변환
+            string finishValues = string.Join(", ", finish);  // finish 배열의 요소들을 쉼표로 구분하여 문자열로 변환
+            // start 값과 finish 값을 출력 (이 값들이 변수가 맞다면 그대로 출력)
+            Debug.Log("Start: " + startValues);
+            Debug.Log("Finish: " + finishValues);
         }
 
-            
-
-        ////------------------------------------------------
-        //float[] move2 = new float[] { 0.0f, 4.0f, 7.0f, 9.0f,};
-        //float[] start2 = new float[] { 0.0f, 4.5f, 7.5f, 9.5f};
-        //float[] finish2 = new float[] { 0.0f, 7.0f, 9.0f, 11.0f};
-        //jobs[1] = new Job(colorData[1], 1, BlockPrefab,
-        //    positionData, source[1], sink[1],
-        //    move2, finish2, start2);
-        ////------------------------------------------------
-        
-        //float[] move3 = new float[] { 0.0f, 7.0f, 9.0f, 11.0f};
-        //float[] start3 = new float[] { 0.0f, 7.5f, 9.5f, 11.5f};
-        //float[] finish3 = new float[] { 0.0f, 8.0f, 10.0f, 13.0f};
-
-        //jobs[2] = new Job(colorData[2], 2, BlockPrefab, 
-        //    positionData, source[2], sink[2],
-        //    move3, finish3, start3);
-
+        int buffer_idx = 5;
         //------------------------------------------------
-        for (int j = 0; j < numProcesses; j++)
-        {
-            Debug.Log(j);
-            machineposition = new Vector3(positionData[j+1].x, -0.31f, positionData[j+1].z);
-            machines[j] = new Machine(ProcessPrefab, machineposition);
-            Debug.Log("New machine " + j + " generated on " + machineposition);
+        for (int j = 1; j < 10; j++)
+        {   
+            // buffer idx는 5이지만 실제로는 원점이 추가되기 때문에 1 더 큰 값으로 인덱싱해야 함
+            if (j != buffer_idx+1)
+            {
+                Debug.Log("----------------------");
+                Debug.Log($"Setting Machine {j}...");
+                Debug.Log($"Position: x = {positionData[j].x}, y = {positionData[j].y}, z = {positionData[j].z}");
+
+                machineposition = new Vector3(positionData[j].x, -0.31f, positionData[j].z);
+                machines.Add(new Machine(ProcessPrefab, machineposition));
+                Debug.Log("New machine " + j + " generated on " + machineposition);
+            }
+            
         }
 
 
@@ -216,12 +195,64 @@ public class GameManager : MonoBehaviour
             Debug.Log("All Jobs Finished!");
         }
     }
+
+    // d와 같은 idx 값을 가지는 행들의 move 값을 추출하여 float[]로 저장하는 함수
+    float[] ExtractData(List<(int idx, int machine, float move, float start, float finish)> time, int d, int x)
+    {
+        // idx가 d와 동일한 행의 인덱스를 모음
+        List<int> matchingIndices = new List<int>();
+
+        for (int i = 0; i < time.Count; i++)
+        {
+            if (time[i].idx == d)
+            {
+                matchingIndices.Add(i);  // 해당 idx를 가지는 행의 index를 저장
+            }
+        }
+
+        // move 배열의 크기는 matchingIndices의 개수 + 1 (첫 번째 값 0.0f 포함)
+        float[] temp = new float[matchingIndices.Count + 1];
+
+        // 첫 번째 값은 0.0f
+        temp[0] = 0.0f;
+        if (x == 0)
+        {
+            // matchingIndices에 있는 값들로 move 배열을 채움
+            for (int i = 0; i < matchingIndices.Count; i++)
+            {
+                temp[i + 1] = time[matchingIndices[i]].move;  // 해당 index의 move 값을 추가
+            }
+        }
+        else if (x == 1)
+        {
+            // matchingIndices에 있는 값들로 move 배열을 채움
+            for (int i = 0; i < matchingIndices.Count; i++)
+            {
+                temp[i + 1] = time[matchingIndices[i]].start;  // 해당 index의 move 값을 추가
+            }
+        }
+        else if (x == 2)
+        {
+            // matchingIndices에 있는 값들로 move 배열을 채움
+            for (int i = 0; i < matchingIndices.Count; i++)
+            {
+                temp[i + 1] = time[matchingIndices[i]].finish;  // 해당 index의 move 값을 추가
+            }
+        }
+        else if (x==3)
+        {
+            temp[0] = time[matchingIndices[6]].machine;
+        }
+
+        return temp;
+    }
     // CSV 파일에서 RGB 값을 읽어와서 List<float[3]> 형태로 저장
     List<Vector3> ReadPositionFromCSV(string file)
     {
         List<Vector3> positions = new List<Vector3>();  // 색상 리스트
         string path = Path.Combine(Application.dataPath, file);  // 파일 경로
         positions.Add(new Vector3(0.0f, 0.0f, 0.0f));  // float[3]로 저장
+        Debug.Log($"Position Added: x = {0}, y = {0}, z = {0}");
         if (File.Exists(path))
         {
             string[] lines = File.ReadAllLines(path);  // 모든 라인을 읽음
@@ -234,6 +265,7 @@ public class GameManager : MonoBehaviour
                 float z = float.Parse(values[2], CultureInfo.InvariantCulture);  // Blue
 
                 positions.Add(new Vector3(x, y, z));  // float[3]로 저장
+                Debug.Log($"Position Added: x = {x}, y = {y}, z = {z}");
             }
         }
         else
@@ -261,7 +293,7 @@ public class GameManager : MonoBehaviour
                 int machine = int.Parse(values[1], CultureInfo.InvariantCulture);
                 float move = float.Parse(values[2], CultureInfo.InvariantCulture);
                 float start = move + movingtime;
-                float finish = float.Parse(values[3], CultureInfo.InvariantCulture);
+                float finish = float.Parse(values[4], CultureInfo.InvariantCulture);
 
                 // ValueTuple을 리스트에 추가
                 log.Add((idx, machine, move, start, finish));
