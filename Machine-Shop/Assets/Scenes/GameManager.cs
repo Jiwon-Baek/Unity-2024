@@ -65,7 +65,7 @@ public class GameManager : MonoBehaviour
     private List<(int idx, int machine, float move, float start, float finish)> timeData;
 
     public Transform parent;
-    static int numBlocks = 10;
+    static int numBlocks; // 20
     static int numProcesses = 7;
     // private int sink_idx;
 
@@ -78,7 +78,7 @@ public class GameManager : MonoBehaviour
     private Vector3 processposition;
     private Vector3 machineposition;
     int count;
-    float movingtime = 0.5f;
+    float movingtime = 10.0f;
     List<Vector3> source;
     List<Vector3> sink;
     List<Vector3> buffer;
@@ -89,10 +89,12 @@ public class GameManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        Time.timeScale = 12f;
+        Time.timeScale = 20f;
         // 1. CSV 파일 읽기
         // 1. CSV 파일 읽기
         timeData = ReadTimeTableFromCSV(timePath);
+        numBlocks = timeData.Count / 7;
+        Debug.Log("TImeData.Count : " + numBlocks);
         colorData = ReadColorsFromCSV(colorPath);
         positionData = ReadPositionFromCSV(positionPath);
         // num_created = 0;
@@ -101,11 +103,11 @@ public class GameManager : MonoBehaviour
         // Job 배열 크기 지정
         jobs = new Job[numBlocks];  // 3개의 Job을 담을 수 있는 배열 생성
 
-        source = stackPositions(5, -1.0f, 0.0f, 1.2f, 0.6f, -0.6f);
+        source = stackPositions(5, -2.0f, 0.0f, -1.2f, 0.6f, -0.6f);
         sink = stackPositions(5, 18.0f, 0.0f, 1.2f, -0.6f, -0.6f);
 
         // buffer 좌표는 (10, 0, 0)
-        buffer = stackPositions(5, 10.0f, 0.0f, 1.2f, 0.0f, -0.6f);
+        buffer = stackPositions(10, 10.0f, 0.0f, 3.0f, -0.6f, -0.6f);
             
         // 각각의 Job 객체 생성
         for (int d = 0; d < numBlocks; d++)
@@ -139,14 +141,14 @@ public class GameManager : MonoBehaviour
             Debug.Log("Job " + d);
             // move 배열의 값들을 출력 (배열을 문자열로 변환)
             string moveValues = string.Join(", ", move);  // move 배열의 요소들을 쉼표로 구분하여 문자열로 변환
-            Debug.Log("Move: " + moveValues);
+            //Debug.Log("Move: " + moveValues);
             string startValues = string.Join(", ", start);  // start 배열의 요소들을 쉼표로 구분하여 문자열로 변환
             string finishValues = string.Join(", ", finish);  // finish 배열의 요소들을 쉼표로 구분하여 문자열로 변환
             // start 값과 finish 값을 출력 (이 값들이 변수가 맞다면 그대로 출력)
-            Debug.Log("Start: " + startValues);
-            Debug.Log("Finish: " + finishValues);
+            //Debug.Log("Start: " + startValues);
+            //Debug.Log("Finish: " + finishValues);
         }
-
+        Debug.Log("All Jobs Generated!");
         int buffer_idx = 5;
         //------------------------------------------------
         for (int j = 1; j < 10; j++)
@@ -156,7 +158,7 @@ public class GameManager : MonoBehaviour
             {
                 Debug.Log("----------------------");
                 Debug.Log($"Setting Machine {j}...");
-                Debug.Log($"Position: x = {positionData[j].x}, y = {positionData[j].y}, z = {positionData[j].z}");
+                //Debug.Log($"Position: x = {positionData[j].x}, y = {positionData[j].y}, z = {positionData[j].z}");
 
                 machineposition = new Vector3(positionData[j].x, -0.31f, positionData[j].z);
                 machines.Add(new Machine(ProcessPrefab, machineposition));

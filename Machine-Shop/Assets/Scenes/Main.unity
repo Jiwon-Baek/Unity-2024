@@ -157,7 +157,7 @@ MonoBehaviour:
     type: 3}
   colorPath: color.csv
   positionPath: position.csv
-  timePath: Time2.csv
+  timePath: 2024-10-22-15-32-52_Unity_log.csv
   parent: {fileID: 0}
   isFinished: 0
 --- !u!4 &530471197

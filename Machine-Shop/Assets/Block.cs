@@ -47,7 +47,7 @@ public class Block : MonoBehaviour
     public Color processColor = Color.green;  // 진행중일 때의 색상
     public Color originalColor;              // 원래 색상
     public Color darkColor;
-    public float movingTime = 0.5f;     // 이동 시간 (0.5초)
+    public float movingTime = 10.0f;     // 이동 시간 (0.5초)
     private float moveProgress = 0.0f;   // 이동 진행 상태 (0.0f ~ 1.0f)
     private float colorChangeDuration;  // 색상이 변하는 시간
     private float colorChangeProgress = 0.0f;  // 색상 변경 진행 상태 (0.0f ~ 1.0f)
