@@ -7,12 +7,13 @@ using UnityEngine;
 public class Block : MonoBehaviour
 {
     public void Initialize(Color _color, int _blockIndex, 
-        List<Vector3> _positions, Vector3 _source, Vector3 _sink,
+        List<Vector3> _positions, Vector3 _source, Vector3 _sink, float _created,
         float[] _moveTime, float[] _finishTime, float[] _startTime)
     {
         originalColor = _color;
         blockindex = _blockIndex;
         positions = _positions;
+        created = _created;
         movetime = _moveTime;
         finishtime = _finishTime;
         starttime = _startTime;
@@ -35,6 +36,7 @@ public class Block : MonoBehaviour
 
         // 다시 0~1 사이의 값으로 변환 후 새로운 darkColor 생성
         Color darkColor = new Color(r / 255f, g / 255f, b / 255f);
+        // darkColor.a = 0.0f;
 
         return darkColor;
     }
@@ -47,6 +49,8 @@ public class Block : MonoBehaviour
     public Color processColor = Color.green;  // 진행중일 때의 색상
     public Color originalColor;              // 원래 색상
     public Color darkColor;
+    public Color transparentColor;              
+
     public float movingTime = 10.0f;     // 이동 시간 (0.5초)
     private float moveProgress = 0.0f;   // 이동 진행 상태 (0.0f ~ 1.0f)
     private float colorChangeDuration;  // 색상이 변하는 시간
@@ -60,8 +64,10 @@ public class Block : MonoBehaviour
     private float timer = 0.0f;          
     private float delta;
     private float target_delta;
+    private float created;
 
     public bool isFinished;
+    public bool isCreated;
 
     public Renderer blockrenderer;
 
@@ -73,11 +79,16 @@ public class Block : MonoBehaviour
     void Start()
     {
         isFinished = false;
+        isCreated = false;
         transform.position = currentPosition;
         positions[0] = transform.position;
         targetPosition = positions[0];
+
+        transparentColor = originalColor;
+        transparentColor.a = 0.0f;
         blockrenderer = GetComponent<Renderer>();
-        blockrenderer.material.color = originalColor;
+        blockrenderer.material.color = transparentColor;
+        Debug.Log("This block " + blockindex + " is now transparent until " + created);
 
         if (blockrenderer == null)
         {
@@ -115,6 +126,25 @@ public class Block : MonoBehaviour
             isFinished = true;
             return;
         }
+
+        if (isCreated == false)
+        {
+            if (timer >= created)
+            {
+                blockrenderer.material.color = originalColor;
+                Debug.Log("Now this Block" + blockindex + "Turned Opaque!");
+                isCreated = true;
+            }
+            else
+            {
+                blockrenderer.material.color = transparentColor;
+                Debug.Log("Block"+blockindex + "\t a : " +blockrenderer.material.color.a);
+                Debug.Log("Block"+blockindex + "\t r : " + blockrenderer.material.color.r);
+                Debug.Log("Block"+blockindex + "\t g : " + blockrenderer.material.color.g);
+                Debug.Log("Block"+blockindex + "\t b : " + blockrenderer.material.color.b);
+            }
+        }
+        
         // Part 2
         if (delta > target_delta) // 단 한 번 호출되는 함수. movetime 도달을 제어
         {
@@ -127,9 +157,9 @@ public class Block : MonoBehaviour
             currentindex += 1; // 0에서 1로 변경
             SetTarget(positions[currentindex]);
             moveProgress = 0.0f;
-            colorChangeProgress = 0.0f;
-            colorChangeDuration = finishtime[currentindex] - starttime[currentindex];
-            blockrenderer.material.color = originalColor;
+            //colorChangeProgress = 0.0f;
+            //colorChangeDuration = finishtime[currentindex] - starttime[currentindex];
+            //blockrenderer.material.color = originalColor;
 
             if (currentindex != num_process - 1) // 만약 마지막 process가 아니라면, 1 더해줌
             {
@@ -141,36 +171,38 @@ public class Block : MonoBehaviour
             }
 
         }
-
-        if (timer >= movetime[currentindex] && timer <= starttime[currentindex])
+        if (isCreated == true)
         {
-            blockrenderer.material.color = darkColor;
-            Move();
-        }
-        else
-        {
-            if (transform.position != targetPosition)
+            if (timer >= movetime[currentindex] && timer <= starttime[currentindex])
             {
+                blockrenderer.material.color = darkColor;
                 Move();
-            }
-            if(timer > starttime[currentindex] && timer < finishtime[currentindex])
-            {
-                check_arrival();
-                blockrenderer.material.color = originalColor;
-                //UpdateColorOverTime();
             }
             else
             {
-                blockrenderer.material.color = darkColor;
+                if (transform.position != targetPosition)
+                {
+                    Move();
+                }
+                if (timer > starttime[currentindex] && timer < finishtime[currentindex])
+                {
+                    check_arrival();
+                    blockrenderer.material.color = originalColor;
+                    //UpdateColorOverTime();
+                }
+                else
+                {
+                    blockrenderer.material.color = darkColor;
+                }
             }
         }
-        
         // 타이머 증가
         timer += Time.deltaTime;
         delta += Time.deltaTime;
         // Debug.Log("Time:"+timer+"| colorprogress: "+colorChangeProgress+ "| colorduration: " + colorChangeDuration);
-        
+
     }
+
     void check_arrival()
     {
         if (transform.position == targetPosition)

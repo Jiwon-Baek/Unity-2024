@@ -10,7 +10,7 @@ using System;
 class Job
 {
     public Job(Color _color, int _blockindex, GameObject prefab, 
-        List<Vector3> _positions, Vector3 _source, Vector3 _sink, 
+        List<Vector3> _positions, Vector3 _source, Vector3 _sink, float created,
         float[] _movetime, float[] _finishtime, float[] _starttime)
     {
         
@@ -20,7 +20,7 @@ class Job
         Block blockComp = block.GetComponent<Block>();
         // 초기화 메서드 호출
         blockComp.Initialize(_color, _blockindex, 
-            _positions, _source, _sink,
+            _positions, _source, _sink, created,
             _movetime, _finishtime, _starttime);
 
         // 활성화
@@ -59,10 +59,12 @@ public class GameManager : MonoBehaviour
     public string colorPath = "color.csv"; // CSV 파일 경로 (프로젝트 폴더 내)
     public string positionPath = "position.csv";
     public string timePath = "time.csv";
+    public string IATPath = "iat.csv";
 
     private List<Color> colorData; // CSV 파일로부터 읽은 RGB 값들 저장
     private List<Vector3> positionData;
     private List<(int idx, int machine, float move, float start, float finish)> timeData;
+    private List<(int idx, float created)> IATData;
 
     public Transform parent;
     static int numBlocks; // 20
@@ -82,7 +84,8 @@ public class GameManager : MonoBehaviour
     List<Vector3> source;
     List<Vector3> sink;
     List<Vector3> buffer;
-
+    private float timer = 0.0f;
+    // int num_created = 0;
     // private float timer = 0.0f;
     // int num_created;
 
@@ -91,8 +94,9 @@ public class GameManager : MonoBehaviour
     {
         Time.timeScale = 20f;
         // 1. CSV 파일 읽기
-        // 1. CSV 파일 읽기
         timeData = ReadTimeTableFromCSV(timePath);
+        IATData = ReadIATFromCSV(IATPath); 
+
         numBlocks = timeData.Count / 7;
         Debug.Log("TImeData.Count : " + numBlocks);
         colorData = ReadColorsFromCSV(colorPath);
@@ -131,12 +135,13 @@ public class GameManager : MonoBehaviour
             float[] move = ExtractData(timeData, d, 0);
             float[] start = ExtractData(timeData, d, 1);
             float[] finish = ExtractData(timeData, d, 2);
+            float created = IATData[d].created;
 
             int coloridx = d % colorData.Count;
 
             jobs[d] = new Job(colorData[coloridx], d, BlockPrefab,
             p_data, source[d], sink[d],
-            move, finish, start);
+            created, move, finish, start);
             Debug.Log("---------------------------------------------");
             Debug.Log("Job " + d);
             // move 배열의 값들을 출력 (배열을 문자열로 변환)
@@ -177,6 +182,17 @@ public class GameManager : MonoBehaviour
     {
         
         check_termination();
+        //if (timer >= IATData[num_created].created)
+        //{
+        //    // jobs[num_created].Activate();
+
+        //    if (num_created < numBlocks - 1)
+        //    {
+        //        num_created++;
+        //    }
+        //}
+
+        timer += Time.deltaTime;
 
     }
 
@@ -277,6 +293,34 @@ public class GameManager : MonoBehaviour
 
         return positions;
     }
+    List<(int idx, float created)> ReadIATFromCSV(string file)
+    {
+        var log = new List<(int idx, float created)>();
+
+        string path = Path.Combine(Application.dataPath, file);  // 파일 경로
+
+        if (File.Exists(path))
+        {
+            string[] lines = File.ReadAllLines(path);  // 모든 라인을 읽음
+
+            foreach (string line in lines.Skip(1))
+            {
+                string[] values = line.Split(',');  // 쉼표로 값들을 분리
+                int idx = int.Parse(values[0], CultureInfo.InvariantCulture);
+                float created = float.Parse(values[1], CultureInfo.InvariantCulture);
+
+                // ValueTuple을 리스트에 추가
+                log.Add((idx, created));
+            }
+
+        }
+        else
+        {
+            Debug.LogError("CSV file not found at: " + path);
+        }
+
+        return log;
+    }
 
     List<(int idx, int machine, float move, float start, float finish)> ReadTimeTableFromCSV(string file)
     {
@@ -326,8 +370,9 @@ public class GameManager : MonoBehaviour
                 float r = float.Parse(values[1], CultureInfo.InvariantCulture);  // Red
                 float g = float.Parse(values[2], CultureInfo.InvariantCulture);  // Green
                 float b = float.Parse(values[3], CultureInfo.InvariantCulture);  // Blue
-
-                colors.Add(new Color(r / 255f, g / 255f, b / 255f));  // float[3]로 저장
+                Color c = new Color(r / 255f, g / 255f, b / 255f);
+                // c.a = 0.3f;
+                colors.Add(c);  // float[3]로 저장
             }
         }
         else
