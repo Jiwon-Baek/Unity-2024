@@ -15,7 +15,7 @@ class Job
         // Instantiate는 static 메서드이므로 Object.Instantiate로 호출해야 합니다.
         block = UnityEngine.Object.Instantiate(prefab);
         // 생성한 인스턴스에서 Block 컴포넌트 가져오기
-        Block blockComp = block.GetComponent<Block>();
+        SingleJobBlock blockComp = block.GetComponent<SingleJobBlock>();
         // 초기화 메서드 호출
         blockComp.Initialize(_color, _blockindex, _source, _position, _sink, _timetable);
         Debug.Log("Job" + _blockindex + " Created!");
@@ -60,6 +60,7 @@ public class PMSP : MonoBehaviour
     public string colorPath = "color.csv"; // CSV 파일 경로 (프로젝트 폴더 내)
     public string positionPath = "position.csv";
     public string timePath = "time_ATCS.csv";
+    public string name = "";
     public int hFactor = 0;
     private List<Color> colorData; // CSV 파일로부터 읽은 RGB 값들 저장
     private List<Vector3> positionData;
@@ -67,7 +68,7 @@ public class PMSP : MonoBehaviour
     public Transform parent;
     static int numBlocks = 100;
     static int numMachine = 5;
-    static int numProcesses = 1;
+    // static int numProcesses = 1;
     private int sink_idx;
     public bool isfinished;
 
@@ -81,16 +82,21 @@ public class PMSP : MonoBehaviour
     List<Vector3> source;
     List<Vector3> sink;
     private float timer = 0.0f;
-    int num_created;
+    // int num_created;
+    TimerManager timermanager;
+
     // Start is called before the first frame update
     void Start()
     {
-        Time.timeScale = 10f;
+        // timermanager = FindObjectOfType<TimerManager>().;
+        timermanager = GameObject.Find(name).GetComponent<TimerManager>();
+
+        Time.timeScale = 20f;
         // 1. CSV 파일 읽기
         colorData = ReadColorsFromCSV(colorPath);
         positionData = ReadPositionFromCSV(positionPath);
         timeData = ReadTimeTableFromCSV(timePath);
-        num_created = 0;
+        // num_created = 0;
         sink_idx = 0;
         // Job 배열 크기 지정
         jobs = new Job[numBlocks];  // 3개의 Job을 담을 수 있는 배열 생성
@@ -133,18 +139,19 @@ public class PMSP : MonoBehaviour
         isfinished = check_termination();
         if (isfinished)
         {
+            timermanager.btn_active = false;
             return;
         }
 
-        if (timer >= timeData[num_created].Item3)
-        {
-            // jobs[num_created].Activate();
+        //if (timer >= timeData[num_created].Item3)
+        //{
+        //    // jobs[num_created].Activate();
             
-            if (num_created <numBlocks - 1)
-            {
-                num_created++;
-            }
-        }
+        //    if (num_created <numBlocks - 1)
+        //    {
+        //        num_created++;
+        //    }
+        //}
         timer += Time.deltaTime;
 
     }
@@ -156,14 +163,14 @@ public class PMSP : MonoBehaviour
         
         for (int i = 0; i < jobs.Length; i++)
         {
-            if (jobs[i].block.GetComponent<Block>().isFinished == true)
+            if (jobs[i].block.GetComponent<SingleJobBlock>().isFinished == true)
             {
-                if (!jobs[i].block.GetComponent<Block>().isSinkUpdated)
+                if (!jobs[i].block.GetComponent<SingleJobBlock>().isSinkUpdated)
                 {
-                    jobs[i].block.GetComponent<Block>().SetSink(sink[sink_idx]);
+                    jobs[i].block.GetComponent<SingleJobBlock>().SetSink(sink[sink_idx]);
                     sink_idx++;
-                    jobs[i].block.GetComponent<Block>().isSinkUpdated = true;
-                    Debug.Log("Block " + jobs[i].block.GetComponent<Block>().blockindex + " is assigned Sink " + sink_idx);
+                    jobs[i].block.GetComponent<SingleJobBlock>().isSinkUpdated = true;
+                    Debug.Log("Block " + jobs[i].block.GetComponent<SingleJobBlock>().blockindex + " is assigned Sink " + sink_idx);
                 }
                 
                 count++;
