@@ -333,7 +333,7 @@ MonoBehaviour:
     type: 3}
   colorPath: color.csv
   positionPath: position.csv
-  timePath: ../PMSP/ATCS.csv
+  timePath: ATCS.csv
   hFactor: 1
   parent: {fileID: 0}
   isfinished: 0
