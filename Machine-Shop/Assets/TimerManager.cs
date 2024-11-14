@@ -18,7 +18,7 @@ public class TimerManager : MonoBehaviour
     {
         m_TotalSeconds += Time.deltaTime;
         TimeSpan timespan = TimeSpan.FromSeconds(m_TotalSeconds);
-        string timer = string.Format("{0:00}:{1:00}.{2:00}",
+        string timer = string.Format("{0:00}:{1:00}.{2:000}",
             timespan.Minutes, timespan.Seconds, timespan.Milliseconds);
 
         return timer;

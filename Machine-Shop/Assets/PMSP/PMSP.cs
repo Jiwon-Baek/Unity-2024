@@ -9,7 +9,7 @@ using System;
 class Job
 {
     public Job(Color _color, int _blockindex, GameObject prefab, 
-        Vector3 _position, Vector3 _source, Vector3 _sink, float[] _timetable)
+        Vector3 _position, Vector3 _source, Vector3 _sink, float[] _timetable, int _tardLevel)
     {
         
         // Instantiate는 static 메서드이므로 Object.Instantiate로 호출해야 합니다.
@@ -17,7 +17,7 @@ class Job
         // 생성한 인스턴스에서 Block 컴포넌트 가져오기
         SingleJobBlock blockComp = block.GetComponent<SingleJobBlock>();
         // 초기화 메서드 호출
-        blockComp.Initialize(_color, _blockindex, _source, _position, _sink, _timetable);
+        blockComp.Initialize(_color, _blockindex, _source, _position, _sink, _timetable, _tardLevel);
         Debug.Log("Job" + _blockindex + " Created!");
         block.SetActive(true);
         // block.SetActive(false);
@@ -64,7 +64,7 @@ public class PMSP : MonoBehaviour
     public int hFactor = 0;
     private List<Color> colorData; // CSV 파일로부터 읽은 RGB 값들 저장
     private List<Vector3> positionData;
-    private List<(int idx, int machine, float release, float move, float setup, float start, float finish, int jobSetup, int machineSetup)> timeData;
+    private List<(int idx, int machine, float release, float move, float setup, float start, float finish, int jobSetup, int machineSetup, int tardLevel)> timeData;
     public Transform parent;
     static int numBlocks = 100;
     static int numMachine = 5;
@@ -89,7 +89,7 @@ public class PMSP : MonoBehaviour
     void Start()
     {
         // timermanager = FindObjectOfType<TimerManager>().;
-        // timermanager = GameObject.Find(name).GetComponent<TimerManager>();
+        timermanager = GameObject.Find(name+"_Timer").GetComponent<TimerManager>();
 
         Time.timeScale = 20f;
         // 1. CSV 파일 읽기
@@ -110,26 +110,26 @@ public class PMSP : MonoBehaviour
         {
             int coloridx = d % colorData.Count;
             int machineidx = d % numMachine;
-            Debug.Log("-------------------------------------------");
-            Debug.Log(d);
-            Debug.Log("Machine: "+d);
-            Debug.Log(timeData[d]);
-            Debug.Log(positionData[timeData[d].Item2]);
+            // Debug.Log("-------------------------------------------");
+            // Debug.Log(d);
+            // Debug.Log("Machine: "+d);
+            // Debug.Log(timeData[d]);
+            // Debug.Log(positionData[timeData[d].Item2]);
 
             float[] timetable = new float[] { timeData[d].Item3, timeData[d].Item4, timeData[d].Item5, timeData[d].Item6, timeData[d].Item7 };
             jobs[d] = new Job(colorData[timeData[d].Item8], d, BlockPrefab,
-            positionData[timeData[d].Item2], source[d], sink[d], timetable);
+            positionData[timeData[d].Item2], source[d], sink[d], timetable, timeData[d].Item9);
         }
 
             
         for (int j = 0; j < numMachine; j++)
         {
-            Debug.Log(j);
+            // Debug.Log(j);
             machineposition = new Vector3(positionData[j].x, -0.305f, positionData[j].z);
             machines[j] = new Machine(ProcessPrefab, machineposition);
-            Debug.Log("New machine " + j + " generated on " + machineposition);
+            // Debug.Log("New machine " + j + " generated on " + machineposition);
         }
-        
+
     }
 
     // Update is called once per frame
@@ -139,7 +139,7 @@ public class PMSP : MonoBehaviour
         isfinished = check_termination();
         if (isfinished)
         {
-            // timermanager.btn_active = false;
+            timermanager.btn_active = false;
             return;
         }
 
@@ -170,7 +170,7 @@ public class PMSP : MonoBehaviour
                     jobs[i].block.GetComponent<SingleJobBlock>().SetSink(sink[sink_idx]);
                     sink_idx++;
                     jobs[i].block.GetComponent<SingleJobBlock>().isSinkUpdated = true;
-                    Debug.Log("Block " + jobs[i].block.GetComponent<SingleJobBlock>().blockindex + " is assigned Sink " + sink_idx);
+                    // Debug.Log("Block " + jobs[i].block.GetComponent<SingleJobBlock>().blockindex + " is assigned Sink " + sink_idx);
                 }
                 
                 count++;
@@ -180,7 +180,7 @@ public class PMSP : MonoBehaviour
 
         if (count == jobs.Length)
         {
-            Debug.Log("All Jobs Finished!");
+            // Debug.Log("All Jobs Finished!");
             return true;
         }
         else
@@ -188,9 +188,9 @@ public class PMSP : MonoBehaviour
             return false;
         }
     }
-    List<(int idx, int machine, float release, float move, float setup, float start, float finish, int jobSetup, int machineSetup)> ReadTimeTableFromCSV(string file)
+    List<(int idx, int machine, float release, float move, float setup, float start, float finish, int jobSetup, int machineSetup, int tard_level)> ReadTimeTableFromCSV(string file)
     {
-        var log = new List<(int idx, int machine, float release, float move, float setup, float start, float finish, int jobSetup, int machineSetup)>();
+        var log = new List<(int idx, int machine, float release, float move, float setup, float start, float finish, int jobSetup, int machineSetup, int tard_level)> ();
 
         string path = Path.Combine(Application.dataPath, file);  // 파일 경로
 
@@ -211,9 +211,45 @@ public class PMSP : MonoBehaviour
                 float finish = float.Parse(values[6], CultureInfo.InvariantCulture);
                 int jobSetup = int.Parse(values[7], CultureInfo.InvariantCulture);
                 int machineSetup = int.Parse(values[8], CultureInfo.InvariantCulture);
+                float tardiness = float.Parse(values[9], CultureInfo.InvariantCulture);
+                int tardLevel;
+
+                //if (tardiness == 0.0f)
+                //{
+                //    tardLevel = 0;
+                //}
+                //else if (tardiness < 50.0f)
+                //{
+                //    tardLevel = 0;
+                //}
+                //else if (tardiness >= 50.0f && tardiness < 100.0f)
+                //{
+                //    tardLevel = 0;
+                //}
+                //else if (tardiness >= 100.0f && tardiness < 150.0f)
+                //{
+                //    tardLevel = 0;
+                //}
+                //else if (tardiness >= 150.0f && tardiness < 200.0f)
+                //{
+                //    tardLevel = 5;
+                //}
+                //else 
+                //{
+                //    tardLevel = 5;
+                //}
+                if (tardiness <= 150.0f)
+                {
+                    tardLevel = 0;
+                }
+                else
+                {
+                    tardLevel = 5;
+                }
+
 
                 // ValueTuple을 리스트에 추가
-                log.Add((idx, machine, release, move, setup, start, finish, jobSetup, machineSetup));
+                log.Add((idx, machine, release, move, setup, start, finish, jobSetup, machineSetup, tardLevel));
             }
 
         }

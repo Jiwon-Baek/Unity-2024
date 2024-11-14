@@ -7,7 +7,7 @@ using UnityEngine;
 public class SingleJobBlock : MonoBehaviour
 {
     public void Initialize(Color _color, int _blockIndex, 
-        Vector3 _source, Vector3 _position, Vector3 _sink, float[] timetable)
+        Vector3 _source, Vector3 _position, Vector3 _sink, float[] timetable, int _tardLevel)
     {
         originalColor = _color;
         blockindex = _blockIndex;
@@ -22,6 +22,7 @@ public class SingleJobBlock : MonoBehaviour
         source = _source;
         position = _position;
         sink = _sink;
+        tardLevel = _tardLevel;
     }
 
     public void SetSink(Vector3 newsink)
@@ -64,6 +65,7 @@ public class SingleJobBlock : MonoBehaviour
     // private float colorchangeduration;  // 색상이 변하는 시간
     // private float colorchangeprogress = 0.0f;  // 색상 변경 진행 상태 (0.0f ~ 1.0f)
 
+    private int tardLevel;
     private float T_created;
     private float T_move;
     private float T_setup;
@@ -113,6 +115,12 @@ public class SingleJobBlock : MonoBehaviour
         
         if (isFinished)
         {
+            // tardLevel 값에 따라 색상 밝기를 조정
+            float intensity = Mathf.Clamp01(tardLevel / 5.0f); // 0~5의 값을 0.0~1.0 사이로 변환
+            Debug.Log("Color of "+blockindex+": \t"+ tardLevel);
+            Color tardColor = new Color(1.0f * intensity, 0.0f, 0.0f, 1.0f); // R 값에만 intensity를 곱하고 알파를 1로 설정
+
+            blockrenderer.material.color = tardColor; // 색상 설정
             Sink();
             return;
         }
