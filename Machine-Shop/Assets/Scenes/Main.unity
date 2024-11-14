@@ -158,6 +158,7 @@ MonoBehaviour:
   colorPath: color.csv
   positionPath: position.csv
   timePath: SSPT.csv
+  name: 
   hFactor: 0
   parent: {fileID: 0}
   isfinished: 0
@@ -280,6 +281,7 @@ MonoBehaviour:
   colorPath: color.csv
   positionPath: position.csv
   timePath: COVERT.csv
+  name: 
   hFactor: 3
   parent: {fileID: 0}
   isfinished: 0
@@ -334,6 +336,7 @@ MonoBehaviour:
   colorPath: color.csv
   positionPath: position.csv
   timePath: ATCS.csv
+  name: 
   hFactor: 1
   parent: {fileID: 0}
   isfinished: 0
@@ -413,7 +416,7 @@ Camera:
   far clip plane: 1000
   field of view: 60
   orthographic: 1
-  orthographic size: 15
+  orthographic size: 18
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -438,7 +441,7 @@ Transform:
   m_GameObject: {fileID: 991324251}
   serializedVersion: 2
   m_LocalRotation: {x: 0.5, y: 0.5, z: -0.5, w: 0.5}
-  m_LocalPosition: {x: 3.8, y: 8.81, z: -14}
+  m_LocalPosition: {x: 3.8, y: 8.81, z: -7.5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -480,6 +483,7 @@ MonoBehaviour:
   colorPath: color.csv
   positionPath: position.csv
   timePath: MDD.csv
+  name: 
   hFactor: 2
   parent: {fileID: 0}
   isfinished: 0
@@ -592,6 +596,61 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 50, y: -30, z: 0}
+--- !u!1 &1739427773
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1739427775}
+  - component: {fileID: 1739427774}
+  m_Layer: 0
+  m_Name: RL
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1739427774
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1739427773}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1202a93f20ce039489164f2d84ae13b2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  BlockPrefab: {fileID: 507142347858533909, guid: dddfd54a42c353247a047cd88ed81823,
+    type: 3}
+  ProcessPrefab: {fileID: 6157636203399221521, guid: 1935f0ce65c806c4e8d8fe17950924bf,
+    type: 3}
+  colorPath: color.csv
+  positionPath: position.csv
+  timePath: RL.csv
+  name: 
+  hFactor: -1
+  parent: {fileID: 0}
+  isfinished: 0
+--- !u!4 &1739427775
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1739427773}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 3.8950205, y: 2.1005454, z: -0.07793896}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1950635070
 GameObject:
   m_ObjectHideFlags: 0
@@ -812,3 +871,4 @@ SceneRoots:
   - {fileID: 943017674}
   - {fileID: 1099653186}
   - {fileID: 706381741}
+  - {fileID: 1739427775}

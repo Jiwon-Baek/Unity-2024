@@ -89,7 +89,7 @@ public class PMSP : MonoBehaviour
     void Start()
     {
         // timermanager = FindObjectOfType<TimerManager>().;
-        timermanager = GameObject.Find(name).GetComponent<TimerManager>();
+        // timermanager = GameObject.Find(name).GetComponent<TimerManager>();
 
         Time.timeScale = 20f;
         // 1. CSV 파일 읽기
@@ -139,7 +139,7 @@ public class PMSP : MonoBehaviour
         isfinished = check_termination();
         if (isfinished)
         {
-            timermanager.btn_active = false;
+            // timermanager.btn_active = false;
             return;
         }
 
