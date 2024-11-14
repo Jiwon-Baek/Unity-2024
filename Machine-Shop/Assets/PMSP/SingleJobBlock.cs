@@ -6,9 +6,11 @@ using UnityEngine;
 
 public class SingleJobBlock : MonoBehaviour
 {
-    public void Initialize(Color _color, int _blockIndex, 
-        Vector3 _source, Vector3 _position, Vector3 _sink, float[] timetable, int _tardLevel)
+    public void Initialize(string _mode, Color _color, int _blockIndex, 
+        Vector3 _source, Vector3 _position, Vector3 _sink, float[] timetable, 
+        int _setupmode, int _setuptime, float _tardiness, int _tardLevel)
     {
+        mode = _mode;
         originalColor = _color;
         blockindex = _blockIndex;
 
@@ -22,7 +24,14 @@ public class SingleJobBlock : MonoBehaviour
         source = _source;
         position = _position;
         sink = _sink;
+        setupmode = _setupmode;
+        setuptime = _setuptime;
+        tardiness = _tardiness;
         tardLevel = _tardLevel;
+        Debug.Log("Color of " + blockindex + "will be set to:" + tardLevel);
+        Debug.Log("Setup time of " + blockindex + "will be set to:" + setuptime);
+        Debug.Log("Tadiness of " + blockindex + "will be set to:" + tardiness);
+
     }
 
     public void SetSink(Vector3 newsink)
@@ -64,20 +73,26 @@ public class SingleJobBlock : MonoBehaviour
     private float moveProgress = 0.0f;   // 이동 진행 상태 (0.0f ~ 1.0f)
     // private float colorchangeduration;  // 색상이 변하는 시간
     // private float colorchangeprogress = 0.0f;  // 색상 변경 진행 상태 (0.0f ~ 1.0f)
-
+    private string mode;
     private int tardLevel;
+    private int setupmode;
     private float T_created;
     private float T_move;
     private float T_setup;
     private float T_start;
     private float T_finish;
     private float T_end;
+    private int setuptime;
+    private float tardiness;
     public bool isSinkUpdated;
+    private bool updated;
     public int blockindex;
 
     private float timer1 = 0.0f;          
     private float timer2;
 
+    IntManager setupmanager;
+    FloatManager tardinessmanager;
     public bool isFinished;
 
     public Renderer blockrenderer;
@@ -91,8 +106,11 @@ public class SingleJobBlock : MonoBehaviour
     {
         // originalColor.a = 0.0f;
 
+        setupmanager = GameObject.Find(mode + "_Setup").GetComponent<IntManager>();
+        tardinessmanager = GameObject.Find(mode + "_Tard").GetComponent<FloatManager>();
         isSinkUpdated = false;
         isFinished = false;
+        updated = false;
         transform.position = currentPosition;
         targetPosition = source;
         transparentColor = originalColor;
@@ -115,18 +133,35 @@ public class SingleJobBlock : MonoBehaviour
         
         if (isFinished)
         {
+            
             // tardLevel 값에 따라 색상 밝기를 조정
             float intensity = Mathf.Clamp01(tardLevel / 5.0f); // 0~5의 값을 0.0~1.0 사이로 변환
-            Debug.Log("Color of "+blockindex+": \t"+ tardLevel);
             Color tardColor = new Color(1.0f * intensity, 0.0f, 0.0f, 1.0f); // R 값에만 intensity를 곱하고 알파를 1로 설정
 
             blockrenderer.material.color = tardColor; // 색상 설정
             Sink();
+
+            if (!updated)
+            {
+                Debug.Log("Block" + blockindex + " updated (before) :" + updated);
+
+                Debug.Log("Block"+blockindex+" Updating Time...");
+                setupmanager.UpdateValue(setuptime);
+                tardinessmanager.UpdateValue(tardiness);
+                updated = true;
+                Debug.Log("Block" + blockindex + " updated (after):"+updated);
+
+            }
+            else
+            {
+                Debug.Log("Block" + blockindex + "Values already updated.");
+            }
             return;
         }
 
         if (timer1 >= T_created)
         {
+
             blockrenderer.material.color = originalColor;
             if (timer1 >= T_move && timer1 <= T_setup)
             {

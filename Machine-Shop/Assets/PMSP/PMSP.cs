@@ -8,8 +8,8 @@ using System;
 
 class Job
 {
-    public Job(Color _color, int _blockindex, GameObject prefab, 
-        Vector3 _position, Vector3 _source, Vector3 _sink, float[] _timetable, int _tardLevel)
+    public Job(string _mode, Color _color, int _blockindex, GameObject prefab, 
+        Vector3 _position, Vector3 _source, Vector3 _sink, float[] _timetable, int _setupmode, int _setuptime, float _tardiness, int _tardLevel)
     {
         
         // Instantiate는 static 메서드이므로 Object.Instantiate로 호출해야 합니다.
@@ -17,7 +17,8 @@ class Job
         // 생성한 인스턴스에서 Block 컴포넌트 가져오기
         SingleJobBlock blockComp = block.GetComponent<SingleJobBlock>();
         // 초기화 메서드 호출
-        blockComp.Initialize(_color, _blockindex, _source, _position, _sink, _timetable, _tardLevel);
+        blockComp.Initialize(_mode, _color, _blockindex, _source, _position, _sink, _timetable, 
+            _setupmode, _setuptime, _tardiness, _tardLevel);
         Debug.Log("Job" + _blockindex + " Created!");
         block.SetActive(true);
         // block.SetActive(false);
@@ -60,11 +61,11 @@ public class PMSP : MonoBehaviour
     public string colorPath = "color.csv"; // CSV 파일 경로 (프로젝트 폴더 내)
     public string positionPath = "position.csv";
     public string timePath = "time_ATCS.csv";
-    public string name = "";
+    public string mode = "";
     public int hFactor = 0;
     private List<Color> colorData; // CSV 파일로부터 읽은 RGB 값들 저장
     private List<Vector3> positionData;
-    private List<(int idx, int machine, float release, float move, float setup, float start, float finish, int jobSetup, int machineSetup, int tardLevel)> timeData;
+    private List<(int idx, int machine, float release, float move, float setup, float start, float finish, int setupmode, int setupTime, float tardiness, int tardLevel)> timeData;
     public Transform parent;
     static int numBlocks = 100;
     static int numMachine = 5;
@@ -84,12 +85,16 @@ public class PMSP : MonoBehaviour
     private float timer = 0.0f;
     // int num_created;
     TimerManager timermanager;
+    IntManager setupmanager;
+    FloatManager tardinessmanager;
 
     // Start is called before the first frame update
     void Start()
     {
         // timermanager = FindObjectOfType<TimerManager>().;
         timermanager = GameObject.Find(name+"_Timer").GetComponent<TimerManager>();
+        setupmanager = GameObject.Find(name+"_Setup").GetComponent<IntManager>();
+        tardinessmanager = GameObject.Find(name+"_Tard").GetComponent<FloatManager>();
 
         Time.timeScale = 20f;
         // 1. CSV 파일 읽기
@@ -117,8 +122,8 @@ public class PMSP : MonoBehaviour
             // Debug.Log(positionData[timeData[d].Item2]);
 
             float[] timetable = new float[] { timeData[d].Item3, timeData[d].Item4, timeData[d].Item5, timeData[d].Item6, timeData[d].Item7 };
-            jobs[d] = new Job(colorData[timeData[d].Item8], d, BlockPrefab,
-            positionData[timeData[d].Item2], source[d], sink[d], timetable, timeData[d].Item9);
+            jobs[d] = new Job(mode, colorData[timeData[d].setupmode], d, BlockPrefab,
+            positionData[timeData[d].Item2], source[d], sink[d], timetable, timeData[d].setupmode, timeData[d].setupTime, timeData[d].tardiness, timeData[d].tardLevel);
         }
 
             
@@ -188,9 +193,9 @@ public class PMSP : MonoBehaviour
             return false;
         }
     }
-    List<(int idx, int machine, float release, float move, float setup, float start, float finish, int jobSetup, int machineSetup, int tard_level)> ReadTimeTableFromCSV(string file)
+    List<(int idx, int machine, float release, float move, float setup, float start, float finish, int setupmode, int setupTime, float tardiness, int tard_level)> ReadTimeTableFromCSV(string file)
     {
-        var log = new List<(int idx, int machine, float release, float move, float setup, float start, float finish, int jobSetup, int machineSetup, int tard_level)> ();
+        var log = new List<(int idx, int machine, float release, float move, float setup, float start, float finish, int setupmode, int setupTime, float tardiness, int tard_level)> ();
 
         string path = Path.Combine(Application.dataPath, file);  // 파일 경로
 
@@ -209,47 +214,44 @@ public class PMSP : MonoBehaviour
                 float setup = float.Parse(values[3], CultureInfo.InvariantCulture) + 2.0f;
                 float start = float.Parse(values[5], CultureInfo.InvariantCulture); 
                 float finish = float.Parse(values[6], CultureInfo.InvariantCulture);
-                int jobSetup = int.Parse(values[7], CultureInfo.InvariantCulture);
+                int setupmode = int.Parse(values[7], CultureInfo.InvariantCulture);
                 int machineSetup = int.Parse(values[8], CultureInfo.InvariantCulture);
+                int setupTime = Math.Abs(machineSetup - setupmode);
                 float tardiness = float.Parse(values[9], CultureInfo.InvariantCulture);
+
+
                 int tardLevel;
 
-                //if (tardiness == 0.0f)
-                //{
-                //    tardLevel = 0;
-                //}
-                //else if (tardiness < 50.0f)
-                //{
-                //    tardLevel = 0;
-                //}
-                //else if (tardiness >= 50.0f && tardiness < 100.0f)
-                //{
-                //    tardLevel = 0;
-                //}
-                //else if (tardiness >= 100.0f && tardiness < 150.0f)
-                //{
-                //    tardLevel = 0;
-                //}
-                //else if (tardiness >= 150.0f && tardiness < 200.0f)
-                //{
-                //    tardLevel = 5;
-                //}
-                //else 
-                //{
-                //    tardLevel = 5;
-                //}
-                if (tardiness <= 150.0f)
+                if (tardiness == 0.0f)
                 {
                     tardLevel = 0;
+                }
+                else if (tardiness < 50.0f)
+                {
+                    tardLevel = 1;
+                }
+                else if (tardiness >= 50.0f && tardiness < 100.0f)
+                {
+                    tardLevel = 2;
+                }
+                else if (tardiness >= 100.0f && tardiness < 150.0f)
+                {
+                    tardLevel = 3;
+                }
+                else if (tardiness >= 150.0f && tardiness < 200.0f)
+                {
+                    tardLevel = 4;
                 }
                 else
                 {
                     tardLevel = 5;
                 }
+                
+                Debug.Log("Color of " + idx + "of tardiness " + tardiness + "will be set to:" + tardLevel);
 
 
                 // ValueTuple을 리스트에 추가
-                log.Add((idx, machine, release, move, setup, start, finish, jobSetup, machineSetup, tardLevel));
+                log.Add((idx, machine, release, move, setup, start, finish, setupmode, setupTime, tardiness, tardLevel));
             }
 
         }
