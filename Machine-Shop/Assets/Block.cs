@@ -132,16 +132,16 @@ public class Block : MonoBehaviour
             if (timer >= created)
             {
                 blockrenderer.material.color = originalColor;
-                Debug.Log("Now this Block" + blockindex + "Turned Opaque!");
+                //Debug.Log("Now this Block" + blockindex + "Turned Opaque!");
                 isCreated = true;
             }
             else
             {
                 blockrenderer.material.color = transparentColor;
-                Debug.Log("Block"+blockindex + "\t a : " +blockrenderer.material.color.a);
-                Debug.Log("Block"+blockindex + "\t r : " + blockrenderer.material.color.r);
-                Debug.Log("Block"+blockindex + "\t g : " + blockrenderer.material.color.g);
-                Debug.Log("Block"+blockindex + "\t b : " + blockrenderer.material.color.b);
+                //Debug.Log("Block"+blockindex + "\t a : " +blockrenderer.material.color.a);
+                //Debug.Log("Block"+blockindex + "\t r : " + blockrenderer.material.color.r);
+                //Debug.Log("Block"+blockindex + "\t g : " + blockrenderer.material.color.g);
+                //Debug.Log("Block"+blockindex + "\t b : " + blockrenderer.material.color.b);
             }
         }
         
@@ -151,7 +151,7 @@ public class Block : MonoBehaviour
             delta = 0.0f;
             if (blockindex == 1)
             {
-                Debug.Log("At" + timer + ", Job " + blockindex + "set target to " + (positions[currentindex].x, positions[currentindex].y, positions[currentindex].z));
+                //Debug.Log("At" + timer + ", Job " + blockindex + "set target to " + (positions[currentindex].x, positions[currentindex].y, positions[currentindex].z));
             }
 
             currentindex += 1; // 0에서 1로 변경

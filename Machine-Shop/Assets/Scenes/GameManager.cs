@@ -7,6 +7,23 @@ using System.Globalization;  // for converting strings to floats
 using System.Linq;
 using System;
 
+class JobData
+{
+    public JobData(int _index)
+    {
+        index = _index;
+        waypoints = new List<(int _positionindex, float _move, float _start, float _finish, bool _isStacking)>();
+
+    }
+    public int index;
+    public List<(int _positionindex, float _move, float _start, float _finish, bool _isStacking)> waypoints;
+
+    public void add_waypoint(int _positionindex, float _move, float _start, float _finish, bool _isStacking)
+    {
+        waypoints.Add((_positionindex, _move, _start, _finish, _isStacking));
+    }
+}
+
 class Job
 {
     public Job(Color _color, int _blockindex, GameObject prefab, 
@@ -63,12 +80,12 @@ public class GameManager : MonoBehaviour
 
     private List<Color> colorData; // CSV 파일로부터 읽은 RGB 값들 저장
     private List<Vector3> positionData;
-    private List<(int idx, int machine, float move, float start, float finish)> timeData;
+    List<JobData> jobdata_list;
     private List<(int idx, float created)> IATData;
 
     public Transform parent;
     static int numBlocks; // 20
-    static int numProcesses = 7;
+    //static int numProcesses = 7;
     // private int sink_idx;
 
     public bool isFinished;
@@ -92,12 +109,12 @@ public class GameManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        Time.timeScale = 20f;
+        numBlocks = 3;
+        Time.timeScale = 1.0f;
         // 1. CSV 파일 읽기
-        timeData = ReadTimeTableFromCSV(timePath);
-        IATData = ReadIATFromCSV(IATPath); 
+        jobdata_list = ReadTimeTableFromCSV(timePath);
+        IATData = ReadIATFromCSV(IATPath);
 
-        numBlocks = timeData.Count / 7;
         Debug.Log("TImeData.Count : " + numBlocks);
         colorData = ReadColorsFromCSV(colorPath);
         positionData = ReadPositionFromCSV(positionPath);
@@ -117,24 +134,27 @@ public class GameManager : MonoBehaviour
         for (int d = 0; d < numBlocks; d++)
         {
             List<Vector3> p_data = new List<Vector3>();
+            // jobdata_list[d]
             // processData 리스트를 p_data 리스트로 복사
-            p_data.AddRange(positionData);
-            for (int u = 0; u < 6; u++)
-            {
-                p_data[u] = positionData[u]; 
-                // 0 : source
-                // 1, 2, 3, 4, 5 : machine 1~5
-                // 6 : Buffer
-            }
+            int num_waypoints = jobdata_list[d].waypoints.Count();
 
-            // processData의 6번째 값(index = 5)을 새로운 값으로 교체
-            p_data[6] = buffer[d];  // 원하는 값을 넣으면 됩니다.
-            float[] m = ExtractData(timeData, d, 3);
-            p_data[7] = positionData[(int)m[0] + 1];
-            //p_data[8] = positionData[(int)m[0] + 1];
-            float[] move = ExtractData(timeData, d, 0);
-            float[] start = ExtractData(timeData, d, 1);
-            float[] finish = ExtractData(timeData, d, 2);
+            
+            float[] move = new float[num_waypoints+1];
+            float[] start = new float[num_waypoints+1];
+            float[] finish = new float[num_waypoints+1];
+
+            move[0] = 0.0f;
+            start[0] = 0.0f;
+            finish[0] = 0.0f;
+            for (int u = 0; u < num_waypoints; u++)
+            {
+                p_data.Add(positionData[jobdata_list[d].waypoints[u]._positionindex]);
+                move[u + 1] = jobdata_list[d].waypoints[u]._move;
+                start[u + 1] = jobdata_list[d].waypoints[u]._start;
+                finish[u + 1] = jobdata_list[d].waypoints[u]._finish;
+            }
+            
+            
             float created = IATData[d].created;
 
             int coloridx = d % colorData.Count;
@@ -143,15 +163,13 @@ public class GameManager : MonoBehaviour
             p_data, source[d], sink[d],
             created, move, finish, start);
             Debug.Log("---------------------------------------------");
-            Debug.Log("Job " + d);
-            // move 배열의 값들을 출력 (배열을 문자열로 변환)
-            string moveValues = string.Join(", ", move);  // move 배열의 요소들을 쉼표로 구분하여 문자열로 변환
-            //Debug.Log("Move: " + moveValues);
-            string startValues = string.Join(", ", start);  // start 배열의 요소들을 쉼표로 구분하여 문자열로 변환
-            string finishValues = string.Join(", ", finish);  // finish 배열의 요소들을 쉼표로 구분하여 문자열로 변환
-            // start 값과 finish 값을 출력 (이 값들이 변수가 맞다면 그대로 출력)
-            //Debug.Log("Start: " + startValues);
-            //Debug.Log("Finish: " + finishValues);
+            Debug.Log("Job " + d + " generated with # of waypoints :"+num_waypoints);
+            for (int k = 0; k < num_waypoints; k++)
+            {
+                Debug.Log("\t" + k + "th waypoint:"+p_data[k]);
+
+            }
+
         }
         Debug.Log("All Jobs Generated!");
         int buffer_idx = 5;
@@ -275,12 +293,12 @@ public class GameManager : MonoBehaviour
         {
             string[] lines = File.ReadAllLines(path);  // 모든 라인을 읽음
 
-            foreach (string line in lines)
+            foreach (string line in lines.Skip(1))
             {
                 string[] values = line.Split(',');  // 쉼표로 값들을 분리
-                float x = float.Parse(values[0], CultureInfo.InvariantCulture);  // Red
-                float y = float.Parse(values[1], CultureInfo.InvariantCulture);  // Green
-                float z = float.Parse(values[2], CultureInfo.InvariantCulture);  // Blue
+                float x = float.Parse(values[1], CultureInfo.InvariantCulture);  // Red
+                float y = float.Parse(values[2], CultureInfo.InvariantCulture);  // Green
+                float z = float.Parse(values[3], CultureInfo.InvariantCulture);  // Blue
 
                 positions.Add(new Vector3(x, y, z));  // float[3]로 저장
                 Debug.Log($"Position Added: x = {x}, y = {y}, z = {z}");
@@ -322,36 +340,44 @@ public class GameManager : MonoBehaviour
         return log;
     }
 
-    List<(int idx, int machine, float move, float start, float finish)> ReadTimeTableFromCSV(string file)
+    List<JobData> ReadTimeTableFromCSV(string file)
     {
-        var log = new List<(int idx, int machine, float move, float start, float finish)>();
-
         string path = Path.Combine(Application.dataPath, file);  // 파일 경로
-
+        List<JobData> jobdata_list = new List<JobData>();
         if (File.Exists(path))
         {
             string[] lines = File.ReadAllLines(path);  // 모든 라인을 읽음
+
+            for (int i = 0; i < numBlocks; i++)
+            {
+                JobData job = new JobData(i);
+                jobdata_list.Add(job);
+            }
+            Debug.Log("JobData Prepared:" + jobdata_list.Count());
 
             foreach (string line in lines.Skip(1))
             {
                 string[] values = line.Split(',');  // 쉼표로 값들을 분리
                 int idx = int.Parse(values[0], CultureInfo.InvariantCulture);
+                
+                
                 int machine = int.Parse(values[1], CultureInfo.InvariantCulture);
                 float move = float.Parse(values[2], CultureInfo.InvariantCulture);
                 float start = move + movingtime;
                 float finish = float.Parse(values[4], CultureInfo.InvariantCulture);
 
-                // ValueTuple을 리스트에 추가
-                log.Add((idx, machine, move, start, finish));
-            }
+                // TRUE/FALSE 문자열을 bool로 변환
+                bool is_stacking = values[5].Trim().ToUpper() == "TRUE";
 
+                jobdata_list[idx].add_waypoint(machine, move, start, finish, is_stacking);
+            }
         }
         else
         {
             Debug.LogError("CSV file not found at: " + path);
         }
 
-        return log;
+        return jobdata_list;
 
     }
     // CSV 파일에서 RGB 값을 읽어와서 List<float[3]> 형태로 저장
