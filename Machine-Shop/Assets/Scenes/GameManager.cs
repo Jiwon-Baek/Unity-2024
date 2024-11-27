@@ -6,29 +6,29 @@ using System.Globalization;  // for converting strings to floats
 
 using System.Linq;
 using System;
+using Unity.VisualScripting;
+using UnityEngine.UIElements;
 
-class JobData
+public class JobData
 {
     public JobData(int _index)
     {
         index = _index;
-        waypoints = new List<(int _positionindex, float _move, float _start, float _finish, bool _isStacking)>();
-
+        waypoints = new List<(Vector3 position, float _move, float _start, float _finish, bool _isStacking)>();
+        
     }
     public int index;
-    public List<(int _positionindex, float _move, float _start, float _finish, bool _isStacking)> waypoints;
+    public List<(Vector3 _position, float _move, float _start, float _finish, bool _isStacking)> waypoints;
 
-    public void add_waypoint(int _positionindex, float _move, float _start, float _finish, bool _isStacking)
+    public void add_waypoint(Vector3 _position, float _move, float _start, float _finish, bool _isStacking)
     {
-        waypoints.Add((_positionindex, _move, _start, _finish, _isStacking));
+        waypoints.Add((_position, _move, _start, _finish, _isStacking));
     }
 }
 
-class Job
+public class Job
 {
-    public Job(Color _color, int _blockindex, GameObject prefab, 
-        List<Vector3> _positions, Vector3 _source, Vector3 _sink, float created,
-        float[] _movetime, float[] _finishtime, float[] _starttime)
+    public Job(Color _color, int _blockindex, GameObject prefab, float created,JobData _jobdata)
     {
         
         // Instantiate는 static 메서드이므로 Object.Instantiate로 호출해야 합니다.
@@ -36,9 +36,7 @@ class Job
         // 생성한 인스턴스에서 Block 컴포넌트 가져오기
         Block blockComp = block.GetComponent<Block>();
         // 초기화 메서드 호출
-        blockComp.Initialize(_color, _blockindex, 
-            _positions, _source, _sink, created,
-            _movetime, _finishtime, _starttime);
+        blockComp.Initialize(_color, _blockindex, created, _jobdata);
 
         // 활성화
         block.SetActive(true);
@@ -84,9 +82,8 @@ public class GameManager : MonoBehaviour
     private List<(int idx, float created)> IATData;
 
     public Transform parent;
-    static int numBlocks; // 20
-    //static int numProcesses = 7;
-    // private int sink_idx;
+    public int numBlocks ; // 20
+    public float timescale;
 
     public bool isFinished;
 
@@ -96,28 +93,23 @@ public class GameManager : MonoBehaviour
     private Vector3 pos;
     private Vector3 processposition;
     private Vector3 machineposition;
-    int count;
-    float movingtime = 10.0f;
     List<Vector3> source;
     List<Vector3> sink;
     List<Vector3> buffer;
     private float timer = 0.0f;
-    // int num_created = 0;
-    // private float timer = 0.0f;
-    // int num_created;
 
     // Start is called before the first frame update
     void Start()
     {
-        numBlocks = 3;
-        Time.timeScale = 1.0f;
+        Time.timeScale = timescale;
         // 1. CSV 파일 읽기
+
+        positionData = ReadPositionFromCSV(positionPath);
+        colorData = ReadColorsFromCSV(colorPath);
         jobdata_list = ReadTimeTableFromCSV(timePath);
         IATData = ReadIATFromCSV(IATPath);
 
         Debug.Log("TImeData.Count : " + numBlocks);
-        colorData = ReadColorsFromCSV(colorPath);
-        positionData = ReadPositionFromCSV(positionPath);
         // num_created = 0;
         // sink_idx = 0;
 
@@ -134,50 +126,34 @@ public class GameManager : MonoBehaviour
         for (int d = 0; d < numBlocks; d++)
         {
             List<Vector3> p_data = new List<Vector3>();
-            // jobdata_list[d]
-            // processData 리스트를 p_data 리스트로 복사
             int num_waypoints = jobdata_list[d].waypoints.Count();
+            jobdata_list[d].waypoints.Insert(0,(source[d], 0.0f, 0.0f, 0.0f,true));
+            float finishtime = jobdata_list[d].waypoints[jobdata_list[d].waypoints.Count - 1].Item4;
+            jobdata_list[d].waypoints.Add((sink[d], finishtime, finishtime+0.05f, finishtime+0.5f,true));
 
-            
-            float[] move = new float[num_waypoints+1];
-            float[] start = new float[num_waypoints+1];
-            float[] finish = new float[num_waypoints+1];
 
-            move[0] = 0.0f;
-            start[0] = 0.0f;
-            finish[0] = 0.0f;
-            for (int u = 0; u < num_waypoints; u++)
-            {
-                p_data.Add(positionData[jobdata_list[d].waypoints[u]._positionindex]);
-                move[u + 1] = jobdata_list[d].waypoints[u]._move;
-                start[u + 1] = jobdata_list[d].waypoints[u]._start;
-                finish[u + 1] = jobdata_list[d].waypoints[u]._finish;
-            }
-            
-            
             float created = IATData[d].created;
 
             int coloridx = d % colorData.Count;
 
-            jobs[d] = new Job(colorData[coloridx], d, BlockPrefab,
-            p_data, source[d], sink[d],
-            created, move, finish, start);
-            Debug.Log("---------------------------------------------");
-            Debug.Log("Job " + d + " generated with # of waypoints :"+num_waypoints);
-            for (int k = 0; k < num_waypoints; k++)
-            {
-                Debug.Log("\t" + k + "th waypoint:"+p_data[k]);
 
+            jobs[d] = new Job(colorData[coloridx], d, BlockPrefab, created, jobdata_list[d]);
+            Debug.Log("---------------------------------------------");
+
+            Debug.Log("Job " + d + " generated with # of waypoints :"+ jobdata_list[d].waypoints.Count);
+            for (int k=0; k < jobdata_list[d].waypoints.Count; k++)
+            {
+                Debug.Log("\tJob "+d+" Waypoints:"+jobdata_list[d].waypoints[k]._position);
             }
 
         }
         Debug.Log("All Jobs Generated!");
         int buffer_idx = 5;
         //------------------------------------------------
-        for (int j = 1; j < 10; j++)
+        for (int j = 0; j < 9; j++)
         {   
             // buffer idx는 5이지만 실제로는 원점이 추가되기 때문에 1 더 큰 값으로 인덱싱해야 함
-            if (j != buffer_idx+1)
+            if (j != buffer_idx)
             {
                 Debug.Log("----------------------");
                 Debug.Log($"Setting Machine {j}...");
@@ -287,7 +263,7 @@ public class GameManager : MonoBehaviour
     {
         List<Vector3> positions = new List<Vector3>();  // 색상 리스트
         string path = Path.Combine(Application.dataPath, file);  // 파일 경로
-        positions.Add(new Vector3(0.0f, 0.0f, 0.0f));  // float[3]로 저장
+        
         Debug.Log($"Position Added: x = {0}, y = {0}, z = {0}");
         if (File.Exists(path))
         {
@@ -363,13 +339,13 @@ public class GameManager : MonoBehaviour
                 
                 int machine = int.Parse(values[1], CultureInfo.InvariantCulture);
                 float move = float.Parse(values[2], CultureInfo.InvariantCulture);
-                float start = move + movingtime;
+                float start = float.Parse(values[3], CultureInfo.InvariantCulture);
                 float finish = float.Parse(values[4], CultureInfo.InvariantCulture);
 
                 // TRUE/FALSE 문자열을 bool로 변환
                 bool is_stacking = values[5].Trim().ToUpper() == "TRUE";
 
-                jobdata_list[idx].add_waypoint(machine, move, start, finish, is_stacking);
+                jobdata_list[idx].add_waypoint(positionData[machine], move, start, finish, is_stacking);
             }
         }
         else
