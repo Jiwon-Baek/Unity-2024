@@ -96,7 +96,7 @@ public class PMSP : MonoBehaviour
         setupmanager = GameObject.Find(name+"_Setup").GetComponent<IntManager>();
         tardinessmanager = GameObject.Find(name+"_Tard").GetComponent<FloatManager>();
 
-        Time.timeScale = 20f;
+        Time.timeScale = 1f;
         // 1. CSV 파일 읽기
         colorData = ReadColorsFromCSV(colorPath);
         positionData = ReadPositionFromCSV(positionPath);
