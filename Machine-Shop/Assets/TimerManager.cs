@@ -27,7 +27,7 @@ public class TimerManager : MonoBehaviour
     private void Start()
     {
         m_TotalSeconds = 0.0f;
-        btn_active = true; //버튼의 초기 상태를 false로 만듦
+        //btn_active = true; //버튼의 초기 상태를 false로 만듦
         // SetTimerOn();
     }
     
@@ -50,6 +50,7 @@ public class TimerManager : MonoBehaviour
         }
         else
         {
+            text_time.text = "";
             return;
         }
         

@@ -11,6 +11,7 @@ public class FloatManager : MonoBehaviour
     public bool btn_active; //버튼이 활성화 상태인지 검사.
     public Text text_ui; // 시간을 표시할 text
     float time; // 시간.
+    
 
     string ShowUI()
     {
@@ -24,7 +25,7 @@ public class FloatManager : MonoBehaviour
 
     private void Start()
     {
-        btn_active = true;
+        //btn_active = true;
         return;
     }
     
@@ -36,6 +37,7 @@ public class FloatManager : MonoBehaviour
         }
         else
         {
+            text_ui.text = "";
             return;
         }
         

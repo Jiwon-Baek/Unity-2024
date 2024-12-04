@@ -25,7 +25,7 @@ public class IntManager : MonoBehaviour
 
     private void Start()
     {
-        btn_active = true;
+        //btn_active = true;
     }
 
     private void Update() // 바뀌는 시간을 text에 반영 해 줄 update 생명주기
@@ -36,6 +36,7 @@ public class IntManager : MonoBehaviour
         }
         else
         {
+            text_ui.text = "";
             return;
         }
         
